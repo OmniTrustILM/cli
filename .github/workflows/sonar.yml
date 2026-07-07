@@ -19,6 +19,7 @@ permissions:
   contents: read
   checks: write
   pull-requests: read
+  actions: read # download the coverage/lint artifacts from the upstream Check PR run
 
 jobs:
   sonar:

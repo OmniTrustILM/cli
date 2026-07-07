@@ -60,8 +60,9 @@ build-plugin: build ## Build the kubectl-ilm plugin binary (same build).
 
 .PHONY: install
 install: build-plugin ## Install ilmctl and kubectl-ilm into GOBIN.
-	install -m 0755 bin/ilmctl "$$(go env GOBIN 2>/dev/null || echo $$(go env GOPATH)/bin)/ilmctl"
-	install -m 0755 bin/kubectl-ilm "$$(go env GOBIN 2>/dev/null || echo $$(go env GOPATH)/bin)/kubectl-ilm"
+	@dir="$$(go env GOBIN)"; [ -n "$$dir" ] || dir="$$(go env GOPATH)/bin"; \
+		install -m 0755 bin/ilmctl "$$dir/ilmctl"; \
+		install -m 0755 bin/kubectl-ilm "$$dir/kubectl-ilm"
 
 .PHONY: run
 run: ## Run ilmctl with ARGS, e.g. make run ARGS="version".
