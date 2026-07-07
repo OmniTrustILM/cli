@@ -1,0 +1,52 @@
+# kubectl-ilm krew plugin manifest. Plugin word is `ilm` → `kubectl ilm`.
+# GoReleaser regenerates this with real release URLs/digests on each tag.
+# Submission to the public krew-index is HELD pending the ILM trademark; this
+# ships only to our custom index (OmniTrustILM/krew-index).
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: ilm
+spec:
+  version: v0.0.0
+  homepage: https://github.com/OmniTrustILM/cli
+  shortDescription: Install, operate and diagnose OmniTrust ILM.
+  description: |
+    The kubectl plugin for OmniTrust ILM. Install the operator, generate and
+    inspect Platform/Connector/Proxy custom resources (otilm.com/v1alpha1), and
+    collect support diagnostics — all with kubectl-grade UX.
+  platforms:
+    - selector:
+        matchLabels:
+          os: linux
+          arch: amd64
+      uri: https://github.com/OmniTrustILM/cli/releases/download/v0.0.0/kubectl-ilm_v0.0.0_linux_amd64.tar.gz
+      sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+      bin: kubectl-ilm
+    - selector:
+        matchLabels:
+          os: linux
+          arch: arm64
+      uri: https://github.com/OmniTrustILM/cli/releases/download/v0.0.0/kubectl-ilm_v0.0.0_linux_arm64.tar.gz
+      sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+      bin: kubectl-ilm
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: amd64
+      uri: https://github.com/OmniTrustILM/cli/releases/download/v0.0.0/kubectl-ilm_v0.0.0_darwin_amd64.tar.gz
+      sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+      bin: kubectl-ilm
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: arm64
+      uri: https://github.com/OmniTrustILM/cli/releases/download/v0.0.0/kubectl-ilm_v0.0.0_darwin_arm64.tar.gz
+      sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+      bin: kubectl-ilm
+    - selector:
+        matchLabels:
+          os: windows
+          arch: amd64
+      uri: https://github.com/OmniTrustILM/cli/releases/download/v0.0.0/kubectl-ilm_v0.0.0_windows_amd64.zip
+      sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+      bin: kubectl-ilm.exe
