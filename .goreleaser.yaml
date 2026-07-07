@@ -1,0 +1,141 @@
+# GoReleaser v2 — one build, published as both `ilmctl` and `kubectl-ilm`.
+# Supply chain: checksums, cosign blob signatures, syft SBOM.
+# Packaging: nfpm (.deb/.rpm), Homebrew tap, scoop bucket, chocolatey, krew.
+# Public indexes (homebrew-core, krew-index, chocolatey community) are HELD
+# pending the ILM trademark; manifests publish only to the org namespace.
+version: 2
+
+project_name: ilmctl
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: ilmctl
+    main: ./cmd/ilmctl
+    binary: ilmctl
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/OmniTrustILM/cli/internal/buildinfo.GitVersion={{.Version}}
+      - -X github.com/OmniTrustILM/cli/internal/buildinfo.GitCommit={{.FullCommit}}
+      - -X github.com/OmniTrustILM/cli/internal/buildinfo.BuildDate={{.Date}}
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+
+# Two archives from the SAME build artifact: one named ilmctl, one kubectl-ilm.
+# The kubectl-ilm archive ships the binary with the plugin name so `tar -xf`
+# yields `kubectl-ilm` on $PATH, satisfying `kubectl plugin list`.
+archives:
+  - id: ilmctl
+    ids: [ilmctl]
+    name_template: "ilmctl_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+      - docs/**/*
+  - id: kubectl-ilm
+    ids: [ilmctl]
+    name_template: "kubectl-ilm_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    wrap_in_directory: false
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+signs:
+  - cmd: cosign
+    artifacts: checksum
+    args:
+      - sign-blob
+      - "--key=env://COSIGN_PRIVATE_KEY"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - "--yes"
+
+sboms:
+  - artifacts: archive
+
+nfpms:
+  - id: ilmctl
+    package_name: ilmctl
+    ids: [ilmctl]
+    formats: [deb, rpm]
+    vendor: OmniTrust ILM
+    homepage: https://github.com/OmniTrustILM/cli
+    maintainer: OmniTrust ILM <support@omnitrust.com>
+    description: Command-line interface for OmniTrust ILM (ilmctl / kubectl ilm).
+    license: MIT
+    bindir: /usr/bin
+
+homebrew_casks:
+  - name: ilmctl
+    ids: [ilmctl]
+    repository:
+      owner: OmniTrustILM
+      name: homebrew-tap
+    homepage: https://github.com/OmniTrustILM/cli
+    description: Command-line interface for OmniTrust ILM.
+    hooks:
+      post:
+        install: |
+          system "ln", "-sf", "#{staged_path}/ilmctl", "#{staged_path}/kubectl-ilm"
+
+scoops:
+  - name: ilmctl
+    ids: [ilmctl]
+    repository:
+      owner: OmniTrustILM
+      name: scoop-bucket
+    homepage: https://github.com/OmniTrustILM/cli
+    description: Command-line interface for OmniTrust ILM.
+    license: MIT
+
+chocolateys:
+  - name: ilmctl
+    ids: [ilmctl]
+    title: OmniTrust ILM CLI
+    authors: OmniTrust ILM
+    project_url: https://github.com/OmniTrustILM/cli
+    license_url: https://github.com/OmniTrustILM/cli/blob/main/LICENSE
+    summary: Command-line interface for OmniTrust ILM.
+    description: |
+      ilmctl / kubectl ilm — install, operate, troubleshoot and diagnose
+      OmniTrust ILM on Kubernetes.
+    source_repo: "https://nuget.omnitrustregistry.com/v3/index.json"
+
+# Renders .krew.yaml for our custom krew index (submission to krew-index held).
+krews:
+  - name: ilm
+    ids: [ilmctl, kubectl-ilm]
+    repository:
+      owner: OmniTrustILM
+      name: krew-index
+    homepage: https://github.com/OmniTrustILM/cli
+    short_description: Install, operate and diagnose OmniTrust ILM.
+    description: |
+      The kubectl plugin for OmniTrust ILM: install the operator, generate and
+      inspect Platform/Connector/Proxy resources, and collect diagnostics.
+
+release:
+  github:
+    owner: OmniTrustILM
+    name: cli
+  draft: false
+  prerelease: auto
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
