@@ -1,0 +1,46 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+formatters:
+  enable:
+    - goimports
+
+linters:
+  enable:
+    - errcheck
+    - gosec
+    - govet
+    - staticcheck
+    - ineffassign
+    - dupl
+    - goconst
+    - revive
+    - misspell
+    - unconvert
+    - unparam
+    - bodyclose
+    - noctx
+  settings:
+    dupl:
+      threshold: 100
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - dupl
+          - gosec
+          - unparam
+      - path: zz_generated
+        linters:
+          - all
+      - path: test/
+        linters:
+          - noctx
+      - path: hack/
+        linters:
+          - gosec

@@ -1,0 +1,34 @@
+# Binaries
+/ilmctl
+/kubectl-ilm
+bin/
+dist/
+
+# Test & coverage artifacts
+*.out
+coverage.html
+cover.html
+golangci-lint-report.xml
+*.test
+
+# Editors / OS
+.idea/
+*.iml
+.vscode/
+*.swp
+.DS_Store
+
+# Tooling / scratch
+docs/superpowers/
+docs/design/
+tmp/
+
+# docs/commands/ is a committed generated artifact — NOT ignored.
+# docs/superpowers/ (planning) and docs/design/ (design records) stay local — always ignored.
+
+# SonarQube scanner working dir
+.scannerwork/
+
+# Diagnostic bundles (ilmctl diagnostics --output)
+*.zip
+*.tgz
