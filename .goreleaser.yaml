@@ -3,6 +3,16 @@
 # Packaging: nfpm (.deb/.rpm), Homebrew tap, scoop bucket, chocolatey, krew.
 # Public indexes (homebrew-core, krew-index, chocolatey community) are HELD
 # pending the ILM trademark; manifests publish only to the org namespace.
+#
+# Package-manager UPLOADS are held too, until their targets exist: none of
+# OmniTrustILM/{homebrew-tap,scoop-bucket,krew-index} is created yet. Those
+# three blocks still render their manifests into dist/, so the shape stays
+# reviewable; drop the skip_upload lines — and wire a cross-repo token into each
+# repository block — once the target repositories exist.
+#
+# The chocolatey block renders nothing: its pipe shells out to a `choco` binary
+# the Linux release runner does not carry, so it is skipped outright by both
+# release.yml and `make release-snapshot` until there is a chocolatey channel.
 version: 2
 
 project_name: ilmctl
@@ -56,12 +66,20 @@ checksum:
   name_template: "checksums.txt"
   algorithm: sha256
 
+# Detached key-based signature over checksums.txt, verifiable with
+#   cosign verify-blob --key cosign.pub --signature checksums.txt.sig checksums.txt
+# cosign v3 defaults to the TUF signing-config path and the new bundle format,
+# both of which demand --bundle; without the two opt-outs below it refuses with
+# "must provide --bundle with --signing-config or --use-signing-config". The
+# flags are verified against cosign v3.0.2, which release.yml pins.
 signs:
   - cmd: cosign
     artifacts: checksum
     args:
       - sign-blob
       - "--key=env://COSIGN_PRIVATE_KEY"
+      - "--use-signing-config=false"
+      - "--new-bundle-format=false"
       - "--output-signature=${signature}"
       - "${artifact}"
       - "--yes"
@@ -84,6 +102,7 @@ nfpms:
 homebrew_casks:
   - name: ilmctl
     ids: [ilmctl]
+    skip_upload: "true"
     repository:
       owner: OmniTrustILM
       name: homebrew-tap
@@ -97,6 +116,7 @@ homebrew_casks:
 scoops:
   - name: ilmctl
     ids: [ilmctl]
+    skip_upload: "true"
     repository:
       owner: OmniTrustILM
       name: scoop-bucket
@@ -121,6 +141,7 @@ chocolateys:
 krews:
   - name: ilm
     ids: [ilmctl, kubectl-ilm]
+    skip_upload: "true"
     repository:
       owner: OmniTrustILM
       name: krew-index

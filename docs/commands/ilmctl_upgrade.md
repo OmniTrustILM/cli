@@ -4,7 +4,7 @@ Upgrade the ILM operator to a newer manifest
 
 ### Synopsis
 
-Re-apply a newer operator manifest. This upgrades the OPERATOR, not a Platform instance (use `platform upgrade NAME --to vX` for that). Reports CRD/RBAC deltas before applying.
+Re-apply a newer operator manifest. This upgrades the OPERATOR, not a Platform instance (use `platform upgrade NAME --to vX` for that). Reports CRD/RBAC deltas before applying. With no source flag the latest published operator release is used; release manifests are verified against the release checksums before anything is applied.
 
 ```
 ilmctl upgrade [flags]
@@ -21,7 +21,7 @@ ilmctl upgrade [flags]
   -n, --namespace string     operator namespace (default "ilm-operator-system")
       --ref string           git commit, tag, or branch
       --timeout duration     wait timeout (used with --wait) (default 5m0s)
-      --version string       operator release tag
+      --version string       operator release tag to upgrade to (default: the latest published release)
       --wait                 wait for the applied Deployments to become Available (ignored with --dry-run)
 ```
 

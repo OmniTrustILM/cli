@@ -23,6 +23,10 @@ jobs:
 
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          # Pinned so the sign-blob flags in .goreleaser.yaml and the binary cannot
+          # drift apart — they are cosign v3 flags, verified against this release.
+          cosign-release: 'v3.0.2'
 
       - name: Install syft (SBOM)
         uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
@@ -32,7 +36,10 @@ jobs:
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean
+          # --skip=chocolatey: the chocolatey pipe shells out to `choco`, which
+          # ubuntu-latest does not carry; the other package managers hold their
+          # uploads in .goreleaser.yaml instead.
+          args: release --clean --skip=chocolatey
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}

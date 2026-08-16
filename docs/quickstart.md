@@ -23,8 +23,11 @@ $ ilmctl deps install --only cert-manager,cnpg
 
 # 3. Install the ILM operator.
 #    Default: latest published release (CRDs applied first, then the controller).
-$ ilmctl init --version v2.18.0 --wait
-#    Operator unreleased? Install from a commit:
+#    The release manifests are verified against the release checksums.txt first.
+$ ilmctl init --wait
+#    Or pin the release:
+$ ilmctl init --version v1.0.0 --wait
+#    Development only — install from a commit or a local checkout:
 $ ilmctl init --ref <commit-sha> --wait
 
 # 4. Generate a Platform CR.

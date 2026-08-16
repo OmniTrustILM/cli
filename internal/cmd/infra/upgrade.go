@@ -44,11 +44,13 @@ func NewUpgradeCommand(o *cli.Options) *cobra.Command {
 		Short:   "Upgrade the ILM operator to a newer manifest",
 		GroupID: string(cli.GroupInfrastructure),
 		Long: "Re-apply a newer operator manifest. This upgrades the OPERATOR, not a Platform " +
-			"instance (use `platform upgrade NAME --to vX` for that). Reports CRD/RBAC deltas before applying.",
+			"instance (use `platform upgrade NAME --to vX` for that). Reports CRD/RBAC deltas before applying. " +
+			"With no source flag the latest published operator release is used; release manifests are " +
+			"verified against the release checksums before anything is applied.",
 		RunE: func(cmd *cobra.Command, _ []string) error { return runUpgrade(cmd, o, f) },
 	}
 	fs := cmd.Flags()
-	fs.StringVar(&f.version, "version", "", "operator release tag")
+	fs.StringVar(&f.version, "version", "", "operator release tag to upgrade to (default: the latest published release)")
 	fs.StringVar(&f.ref, "ref", "", "git commit, tag, or branch")
 	fs.StringVar(&f.manifestPath, "manifest", "", "explicit manifest file or URL")
 	fs.StringVar(&f.fromSource, "from-source", "", "local operator checkout path (development only)")
@@ -76,7 +78,7 @@ func runUpgrade(cmd *cobra.Command, o *cli.Options, f *initFlags) error {
 	src := manifest.Source{
 		Manifest: f.manifestPath, FromSource: f.fromSource, Ref: f.ref, Version: f.version,
 	}
-	crds, controller, err := resolveManifestObjects(ctx, o, src, "Upgrade")
+	crds, controller, err := resolveManifestObjects(ctx, o, src)
 	if err != nil {
 		return err
 	}

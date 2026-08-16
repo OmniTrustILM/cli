@@ -174,10 +174,11 @@ func TestInit_FlagsAndGroup(t *testing.T) {
 	assert.NotNil(t, cmd.Flags().ShorthandLookup("n"))
 }
 
-// TestInit_DefaultVersionFailsFast confirms that the unreleased default path
-// (no --version/--ref/--from-source/--manifest) prints guidance to ErrOut and
-// returns a non-nil error.
-func TestInit_DefaultVersionFailsFast(t *testing.T) {
+// TestInit_DefaultInstallsLatestRelease confirms that with no source flag at
+// all, init installs the latest published release and names the release it
+// resolved, so the user sees what is being applied.
+func TestInit_DefaultInstallsLatestRelease(t *testing.T) {
+	serveRelease(t, "v1.2.3", releaseAssets())
 	c := buildInitClient(t, false)
 	old := clientFor
 	clientFor = func(*cli.Options) (*k8s.Client, error) { return c, nil }
@@ -185,12 +186,51 @@ func TestInit_DefaultVersionFailsFast(t *testing.T) {
 
 	out, errOut := &bytes.Buffer{}, &bytes.Buffer{}
 	cmd := NewInitCommand(newInitOptions(out, errOut))
-	cmd.SetArgs([]string{}) // no source flags → ErrUnreleased
+	cmd.SetArgs([]string{infraDryRunClient, "-n", infraOperatorSys})
+	require.NoError(t, cmd.Execute())
+	assert.Contains(t, errOut.String(), "v1.2.3", "the resolved release must be reported")
+	assert.Contains(t, out.String(), infraPlatformsCRD)
+}
+
+// TestInit_VersionRefusesATamperedManifest confirms that a downloaded manifest
+// which does not match the release's checksums.txt is never applied.
+func TestInit_VersionRefusesATamperedManifest(t *testing.T) {
+	assets := releaseAssets()
+	assets[infraCtrlAsset] = []byte(fakeOperatorController + "# tampered\n")
+	serveRelease(t, infraReleaseTag, assets)
+
+	c := buildInitClient(t, false)
+	old := clientFor
+	clientFor = func(*cli.Options) (*k8s.Client, error) { return c, nil }
+	defer func() { clientFor = old }()
+
+	out, errOut := &bytes.Buffer{}, &bytes.Buffer{}
+	cmd := NewInitCommand(newInitOptions(out, errOut))
+	cmd.SetArgs([]string{infraVersionFlag, infraReleaseTag, "-n", infraOperatorSys})
 	err := cmd.Execute()
 	require.Error(t, err)
-	// Guidance must steer the user toward both --ref and --from-source.
-	assert.Contains(t, errOut.String(), "--ref")
-	assert.Contains(t, errOut.String(), infraFromSource)
+	assert.Contains(t, err.Error(), "checksum")
+	assert.Contains(t, err.Error(), infraCtrlAsset)
+	assert.Empty(t, out.String(), "nothing may be applied from an unverified release")
+}
+
+// TestInit_NoReleasePublishedSteersAtDeveloperSources confirms that when the
+// release host publishes nothing, the failure still points at --version, --ref
+// and --from-source rather than at a bare 404.
+func TestInit_NoReleasePublishedSteersAtDeveloperSources(t *testing.T) {
+	serveNoRelease(t)
+	c := buildInitClient(t, false)
+	old := clientFor
+	clientFor = func(*cli.Options) (*k8s.Client, error) { return c, nil }
+	defer func() { clientFor = old }()
+
+	out, errOut := &bytes.Buffer{}, &bytes.Buffer{}
+	cmd := NewInitCommand(newInitOptions(out, errOut))
+	cmd.SetArgs([]string{})
+	err := cmd.Execute()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "--ref")
+	assert.Contains(t, err.Error(), infraFromSource)
 }
 
 // TestInit_FromSource_DryRunClient verifies that --from-source + --dry-run=client

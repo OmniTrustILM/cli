@@ -24,6 +24,12 @@ package infra
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -32,6 +38,7 @@ import (
 
 	"github.com/OmniTrustILM/cli/internal/cli"
 	"github.com/OmniTrustILM/cli/internal/k8s"
+	"github.com/OmniTrustILM/cli/internal/manifest"
 	"github.com/OmniTrustILM/cli/internal/render"
 )
 
@@ -67,7 +74,65 @@ const (
 	infraMethodOLM     = "--method=olm"
 	infraChannelFlag   = "--channel"
 	infraChannelStable = "stable"
+	infraVersionFlag   = "--version"
+	infraCRDsAsset     = "ilm-operator.crds.yaml"
+	infraCtrlAsset     = "ilm-operator.yaml"
+	infraReleaseTag    = "v1.0.0"
 )
+
+// releaseAssets renders the assets of a published operator release: the two
+// install manifests plus the sha256sum-format checksums.txt over them.
+func releaseAssets() map[string][]byte {
+	assets := map[string][]byte{
+		infraCRDsAsset: []byte(fakeOperatorCRDs),
+		infraCtrlAsset: []byte(fakeOperatorController),
+	}
+	var sums strings.Builder
+	for _, n := range []string{infraCRDsAsset, infraCtrlAsset} {
+		sum := sha256.Sum256(assets[n])
+		_, _ = fmt.Fprintf(&sums, "%s  %s\n", hex.EncodeToString(sum[:]), n)
+	}
+	assets["checksums.txt"] = []byte(sums.String())
+	return assets
+}
+
+// serveRelease publishes assets as release tag from an httptest server shaped
+// like the GitHub releases host (/download/<tag>/<asset>, plus the
+// /latest/download/<asset> redirect) and points the manifest package's release
+// base at it for the duration of the test, so the release paths never touch the
+// network. Assets mutated after releaseAssets() but before this call model a
+// download that no longer matches the published checksums.
+func serveRelease(t *testing.T, tag string, assets map[string][]byte) {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if name, ok := strings.CutPrefix(r.URL.Path, "/latest/download/"); ok {
+			http.Redirect(w, r, "/download/"+tag+"/"+name, http.StatusFound)
+			return
+		}
+		name, ok := strings.CutPrefix(r.URL.Path, "/download/"+tag+"/")
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		body, ok := assets[name]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write(body)
+	}))
+	t.Cleanup(srv.Close)
+	t.Cleanup(manifest.SetReleaseBaseForTest(srv.URL))
+}
+
+// serveNoRelease points the release base at a host that publishes nothing, the
+// shape GitHub answers with when a repository has no releases at all.
+func serveNoRelease(t *testing.T) {
+	t.Helper()
+	srv := httptest.NewServer(http.NotFoundHandler())
+	t.Cleanup(srv.Close)
+	t.Cleanup(manifest.SetReleaseBaseForTest(srv.URL))
+}
 
 // establishedCRDClient builds a fake Client whose scheme includes
 // apiextensions CRDs. When olmPresent is true the discovery fake advertises

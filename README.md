@@ -23,7 +23,8 @@ go install github.com/OmniTrustILM/cli/cmd/ilmctl@latest
 ## Contributing
 
 Contributions are welcome. All contributors sign the CLA, handled automatically
-by cla-assistant on your first pull request.
+by cla-assistant on your first pull request. Maintainers cutting a release
+follow [RELEASE.md](RELEASE.md).
 
 ## License
 
