@@ -108,11 +108,6 @@ func TestGoReleaserConfig(t *testing.T) {
 	require.Contains(t, string(formatsRaw), "rpm")
 }
 
-// TestGoReleaserSigning pins the cosign v3 invocation. cosign v3 turned on the
-// TUF signing-config path and the new bundle format by default, and both demand
-// --bundle: without these opt-outs sign-blob refuses and the release dies right
-// after the checksums are calculated. Asserting only that "cosign" appears
-// somewhere would pass on exactly the config that breaks.
 // TestGoReleaserChangelog pins the release-notes delegation: github-native hands the
 // notes to GitHub's generator, which applies the label categories in .github/release.yml
 // (synced from the org template). A GoReleaser-formatted commit list would ignore both.
@@ -129,6 +124,11 @@ func TestGoReleaserChangelog(t *testing.T) {
 	require.NoError(t, err, ".github/release.yml must exist (synced from the org template)")
 }
 
+// TestGoReleaserSigning pins the cosign v3 invocation. cosign v3 turned on the
+// TUF signing-config path and the new bundle format by default, and both demand
+// --bundle: without these opt-outs sign-blob refuses and the release dies right
+// after the checksums are calculated. Asserting only that "cosign" appears
+// somewhere would pass on exactly the config that breaks.
 func TestGoReleaserSigning(t *testing.T) {
 	cfg := readYAML(t, filepath.Join(repoRoot(t), goreleaserFile))
 
