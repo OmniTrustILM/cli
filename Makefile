@@ -91,7 +91,10 @@ verify: tidy fmt vet lint coverage ## One-shot pre-commit gate.
 
 .PHONY: release-snapshot
 release-snapshot: ## Build a local snapshot release (no publish) to verify .goreleaser.yaml.
-	goreleaser release --snapshot --clean --skip=publish,sign
+	# chocolatey is skipped here for the same reason release.yml skips it: the
+	# pipe shells out to `choco`, which neither the release runner nor a typical
+	# dev machine carries. Snapshot and release therefore render the same set.
+	goreleaser release --snapshot --clean --skip=publish,sign,chocolatey
 
 .PHONY: krew-validate
 krew-validate: ## Validate the krew plugin manifest (dry-run install via kubectl krew).

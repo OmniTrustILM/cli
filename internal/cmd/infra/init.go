@@ -24,7 +24,6 @@ package infra
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -65,6 +64,8 @@ func NewInitCommand(o *cli.Options) *cobra.Command {
 		GroupID: string(cli.GroupInfrastructure),
 		Long: "Install the ILM operator using the manifest method (CRDs-first ordered server-side apply) " +
 			"or the OLM method (CatalogSource, OperatorGroup, Subscription). " +
+			"With no source flag the latest published operator release is installed; release manifests are " +
+			"verified against the release checksums before anything is applied. " +
 			"Use --dry-run=client|server to render the resolved objects without applying (GitOps).",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return runInit(cmd, o, f)
@@ -72,7 +73,7 @@ func NewInitCommand(o *cli.Options) *cobra.Command {
 	}
 
 	fs := cmd.Flags()
-	fs.StringVar(&f.version, "version", "", "operator release tag (default install source)")
+	fs.StringVar(&f.version, "version", "", "operator release tag to install (default: the latest published release)")
 	fs.StringVar(&f.ref, "ref", "", "git commit, tag, or branch to read committed manifests from")
 	fs.StringVar(&f.manifestPath, "manifest", "", "explicit manifest file or URL")
 	fs.StringVar(&f.fromSource, "from-source", "", "local operator checkout path (development only)")
@@ -143,7 +144,7 @@ func runInitManifest(ctx context.Context, o *cli.Options, c *k8s.Client, f *init
 		Ref:        f.ref,
 		Version:    f.version,
 	}
-	crdObjs, ctrlObjs, err := resolveManifestObjects(ctx, o, src, "Install")
+	crdObjs, ctrlObjs, err := resolveManifestObjects(ctx, o, src)
 	if err != nil {
 		return err
 	}
@@ -178,24 +179,27 @@ func runInitManifest(ctx context.Context, o *cli.Options, c *k8s.Client, f *init
 	return waitForDeployments(ctx, o, a, ctrlObjs, f, dryRun)
 }
 
-// resolveManifestObjects resolves a manifest source and returns the CRD and
-// controller object sets. verb ("Install"/"Upgrade") tailors the guidance
-// printed when the operator has no published release yet.
-func resolveManifestObjects(ctx context.Context, o *cli.Options, src manifest.Source, verb string) (crdObjs, ctrlObjs []*unstructured.Unstructured, err error) {
+// resolveManifestObjects resolves a manifest source, fetches it — verifying it
+// against the release checksums when the source is a published release — and
+// returns the CRD and controller object sets.
+func resolveManifestObjects(ctx context.Context, o *cli.Options, src manifest.Source) (crdObjs, ctrlObjs []*unstructured.Unstructured, err error) {
 	resolved, err := manifest.Resolve(src)
 	if err != nil {
-		if errors.Is(err, manifest.ErrUnreleased) {
-			_, _ = fmt.Fprintln(o.ErrOut, "The operator has no published release yet.")
-			_, _ = fmt.Fprintf(o.ErrOut, "%s from a specific commit with --ref <commit-sha>, or from a local checkout with --from-source <path>.\n", verb)
-		}
 		return nil, nil, err
 	}
-
-	crdObjs, err = fetchSplit(ctx, resolved.CRDsRef)
+	fetched, err := manifest.FetchAll(ctx, resolved)
 	if err != nil {
 		return nil, nil, err
 	}
-	ctrlObjs, err = fetchSplit(ctx, resolved.ControllerRef)
+	if fetched.Version != "" {
+		_, _ = fmt.Fprintf(o.ErrOut, "Using operator release %s (checksums verified).\n", fetched.Version)
+	}
+
+	crdObjs, err = manifest.Split(fetched.CRDs)
+	if err != nil {
+		return nil, nil, err
+	}
+	ctrlObjs, err = manifest.Split(fetched.Controller)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -207,15 +211,6 @@ func resolveManifestObjects(ctx context.Context, o *cli.Options, src manifest.So
 		crdObjs, ctrlObjs = splitByCRD(ctrlObjs)
 	}
 	return crdObjs, ctrlObjs, nil
-}
-
-// fetchSplit fetches a manifest ref and splits it into individual objects.
-func fetchSplit(ctx context.Context, ref string) ([]*unstructured.Unstructured, error) {
-	raw, err := manifest.Fetch(ctx, ref)
-	if err != nil {
-		return nil, err
-	}
-	return manifest.Split(raw)
 }
 
 // applyDeps installs pinned upstream dependencies, folding their apply results

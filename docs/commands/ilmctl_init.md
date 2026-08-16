@@ -4,7 +4,7 @@ Install the ILM operator
 
 ### Synopsis
 
-Install the ILM operator using the manifest method (CRDs-first ordered server-side apply) or the OLM method (CatalogSource, OperatorGroup, Subscription). Use --dry-run=client|server to render the resolved objects without applying (GitOps).
+Install the ILM operator using the manifest method (CRDs-first ordered server-side apply) or the OLM method (CatalogSource, OperatorGroup, Subscription). With no source flag the latest published operator release is installed; release manifests are verified against the release checksums before anything is applied. Use --dry-run=client|server to render the resolved objects without applying (GitOps).
 
 ```
 ilmctl init [flags]
@@ -25,7 +25,7 @@ ilmctl init [flags]
   -n, --namespace string       operator namespace (default "ilm-operator-system")
       --ref string             git commit, tag, or branch to read committed manifests from
       --timeout duration       wait timeout (used with --wait) (default 5m0s)
-      --version string         operator release tag (default install source)
+      --version string         operator release tag to install (default: the latest published release)
       --wait                   wait for the applied Deployments to become Available (ignored with --dry-run)
       --with-deps              also install pinned upstream dependencies
 ```

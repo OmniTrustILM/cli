@@ -48,7 +48,10 @@ func TestUpgrade_FromSourceDryRunReportsDeltas(t *testing.T) {
 	assert.Contains(t, out.String(), "ClusterRole")
 }
 
-func TestUpgrade_DefaultVersionFailsFast(t *testing.T) {
+// TestUpgrade_VersionUsesTheVerifiedRelease confirms that upgrade resolves a
+// pinned release, verifies it, and reports the release it is about to apply.
+func TestUpgrade_VersionUsesTheVerifiedRelease(t *testing.T) {
+	serveRelease(t, infraReleaseTag, releaseAssets())
 	c := establishedCRDClient(t, false)
 	old := clientFor
 	clientFor = func(*cli.Options) (*k8s.Client, error) { return c, nil }
@@ -56,9 +59,29 @@ func TestUpgrade_DefaultVersionFailsFast(t *testing.T) {
 
 	var out, errOut bytes.Buffer
 	cmd := NewUpgradeCommand(newTestOptions(&out, &errOut))
-	cmd.SetArgs([]string{"--version", "v2.18.0"})
-	require.Error(t, cmd.Execute())
-	assert.Contains(t, errOut.String(), "--ref")
+	cmd.SetArgs([]string{infraVersionFlag, infraReleaseTag, infraDryRunClient})
+	require.NoError(t, cmd.Execute())
+	assert.Contains(t, errOut.String(), infraReleaseTag)
+	assert.Contains(t, out.String(), "CustomResourceDefinition")
+}
+
+// TestUpgrade_UnknownVersionIsActionable confirms that a release tag with no
+// published assets names the tag and where to look, instead of a bare 404.
+func TestUpgrade_UnknownVersionIsActionable(t *testing.T) {
+	serveRelease(t, infraReleaseTag, releaseAssets())
+	c := establishedCRDClient(t, false)
+	old := clientFor
+	clientFor = func(*cli.Options) (*k8s.Client, error) { return c, nil }
+	defer func() { clientFor = old }()
+
+	var out, errOut bytes.Buffer
+	cmd := NewUpgradeCommand(newTestOptions(&out, &errOut))
+	cmd.SetArgs([]string{infraVersionFlag, "v9.9.9"})
+	err := cmd.Execute()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "v9.9.9")
+	assert.Contains(t, err.Error(), infraCRDsAsset)
+	assert.Empty(t, out.String())
 }
 
 // TestUpgrade_Wait_TimesOut verifies that upgrade --wait fails with a clear,

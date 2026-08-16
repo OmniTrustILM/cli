@@ -17,12 +17,15 @@ There are two separate upgrade operations. Use the right one for your intent.
 
 ```console
 # Preview the upgrade (server-side dry run — validates, does not apply).
-$ ilmctl upgrade --version v2.19.0 --dry-run=server
+$ ilmctl upgrade --version v1.0.0 --dry-run=server
 
 # Apply the upgrade.
-$ ilmctl upgrade --version v2.19.0
+$ ilmctl upgrade --version v1.0.0
 
-# Operator not yet released? Pin to a specific commit.
+# Omit --version to move to the latest published operator release.
+$ ilmctl upgrade
+
+# Development only — upgrade to a specific commit.
 $ ilmctl upgrade --ref <commit-sha>
 ```
 
@@ -30,7 +33,14 @@ $ ilmctl upgrade --ref <commit-sha>
 is intended for local development only; it is not for production upgrades.
 
 The upgrade resolves the manifest source using the same priority as `init`:
-`--manifest` > `--from-source` > `--ref` > `--version` (release assets).
+`--manifest` > `--from-source` > `--ref` > `--version` (release assets), falling
+back to the latest published release when no source flag is given.
+
+Release sources — an explicit `--version` and the default latest release — are
+verified: both manifests are checked against the release's `checksums.txt`
+before anything is applied, and a mismatched or missing entry aborts the run.
+`--manifest`, `--from-source` and `--ref` are developer sources and carry no
+published checksums, so they are applied as fetched.
 
 ## Upgrading a Platform instance
 

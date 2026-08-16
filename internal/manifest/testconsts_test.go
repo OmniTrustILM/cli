@@ -33,4 +33,14 @@ const (
 	manifestOLMV1alpha1  = "v1alpha1"
 	manifestTmpYAML      = "/tmp/m.yaml"
 	manifestKindFoo      = "kind: Foo\n"
+
+	// Release-asset fixtures shared by the source tests.
+	manifestCRDsAsset       = "ilm-operator.crds.yaml"
+	manifestControllerAsset = "ilm-operator.yaml"
+	manifestChecksumsAsset  = "checksums.txt"
+	manifestReleaseTag      = "v1.0.0"
+	manifestLatestTag       = "v1.2.3"
+	manifestReleasesHost    = "https://github.com/OmniTrustILM/operator/releases"
+	manifestCRDsBody        = "kind: CustomResourceDefinition\n"
+	manifestControllerBody  = "kind: Deployment\n"
 )
