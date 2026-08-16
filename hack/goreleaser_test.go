@@ -113,6 +113,22 @@ func TestGoReleaserConfig(t *testing.T) {
 // --bundle: without these opt-outs sign-blob refuses and the release dies right
 // after the checksums are calculated. Asserting only that "cosign" appears
 // somewhere would pass on exactly the config that breaks.
+// TestGoReleaserChangelog pins the release-notes delegation: github-native hands the
+// notes to GitHub's generator, which applies the label categories in .github/release.yml
+// (synced from the org template). A GoReleaser-formatted commit list would ignore both.
+func TestGoReleaserChangelog(t *testing.T) {
+	root := repoRoot(t)
+	cfg := readYAML(t, filepath.Join(root, goreleaserFile))
+
+	changelog, ok := cfg["changelog"].(map[string]any)
+	require.True(t, ok, "changelog block present")
+	require.Equal(t, "github-native", changelog["use"],
+		"release notes must come from GitHub's generator so .github/release.yml applies")
+
+	_, err := os.Stat(filepath.Join(root, ".github", "release.yml"))
+	require.NoError(t, err, ".github/release.yml must exist (synced from the org template)")
+}
+
 func TestGoReleaserSigning(t *testing.T) {
 	cfg := readYAML(t, filepath.Join(repoRoot(t), goreleaserFile))
 

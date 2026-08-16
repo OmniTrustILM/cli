@@ -151,6 +151,11 @@ krews:
       The kubectl plugin for OmniTrust ILM: install the operator, generate and
       inspect Platform/Connector/Proxy resources, and collect diagnostics.
 
+# github-native delegates the release notes to GitHub's generator, which applies the
+# label-based categories in .github/release.yml (synced from the org template).
+changelog:
+  use: github-native
+
 release:
   github:
     owner: OmniTrustILM
