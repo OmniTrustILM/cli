@@ -28,4 +28,8 @@ const (
 	k8sOperatorSys = "ilm-operator-system"
 	k8sNonexistent = "nonexistent"
 	k8sCoreZero    = "core-0"
+	k8sILM         = "ilm" // fixture namespace; doubles as the platform name
+	k8sCore        = "core"
+	k8sAppLabel    = "app"
+	k8sPlatformUID = "uid-1"
 )

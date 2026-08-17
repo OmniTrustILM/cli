@@ -48,7 +48,7 @@ func TestDetectOLM_Present(t *testing.T) {
 		Resources: []*metav1.APIResourceList{
 			{GroupVersion: "operators.coreos.com/v1alpha1", APIResources: []metav1.APIResource{
 				{Name: "subscriptions", Kind: "Subscription"},
-				{Name: "catalogsources", Kind: "CatalogSource"},
+				{Name: "catalogsources", Kind: kindCatalogSource},
 			}},
 			{GroupVersion: "operators.coreos.com/v1", APIResources: []metav1.APIResource{
 				{Name: "operatorgroups", Kind: "OperatorGroup"},
@@ -66,7 +66,7 @@ func TestDetectOLM_Absent(t *testing.T) {
 	t.Parallel()
 	disco := &fakedisco.FakeDiscovery{Fake: &clienttesting.Fake{
 		Resources: []*metav1.APIResourceList{
-			{GroupVersion: "apps/v1", APIResources: []metav1.APIResource{{Name: "deployments", Kind: "Deployment"}}},
+			{GroupVersion: "apps/v1", APIResources: []metav1.APIResource{{Name: "deployments", Kind: kindDeployment}}},
 		},
 	}}
 	c := &k8s.Client{Discovery: disco}
@@ -103,14 +103,14 @@ func catalogSourceImage(t *testing.T, c *k8s.Client, ns string) string {
 	got.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   manifestOLMGroup,
 		Version: manifestOLMV1alpha1,
-		Kind:    "CatalogSource",
+		Kind:    kindCatalogSource,
 	})
 	require.NoError(t, c.Typed.Get(
 		context.Background(),
 		ctrlclient.ObjectKey{Namespace: ns, Name: "ilm-operator-catalog"},
 		&got,
 	))
-	img, _, err := unstructured.NestedString(got.Object, "spec", "image")
+	img, _, err := unstructured.NestedString(got.Object, keySpec, "image")
 	require.NoError(t, err)
 	return img
 }

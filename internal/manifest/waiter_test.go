@@ -65,7 +65,7 @@ func availableDeployment(name, ns string) *appsv1.Deployment {
 			AvailableReplicas:  1,
 			ReadyReplicas:      1,
 			Conditions: []appsv1.DeploymentCondition{
-				{Type: appsv1.DeploymentAvailable, Status: "True"},
+				{Type: appsv1.DeploymentAvailable, Status: conditionTrue},
 			},
 		},
 	}

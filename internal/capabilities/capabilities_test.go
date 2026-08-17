@@ -153,13 +153,13 @@ func TestRequiredFor(t *testing.T) {
 		{"managed db", Modes{DBManaged: true}, []Dep{DepCNPG}},
 		{"managed messaging", Modes{MessagingManaged: true}, []Dep{DepRabbitMQ}},
 		{"managed keycloak", Modes{KeycloakManaged: true}, []Dep{DepKeycloak}},
-		{"gateway edge", Modes{Edge: "gatewayAPI"}, []Dep{DepGatewayAPI}},
-		{"letsEncrypt tls needs cert-manager", Modes{TLSSource: "letsEncrypt"}, []Dep{DepCertManager}},
+		{"gateway edge", Modes{Edge: edgeGatewayAPI}, []Dep{DepGatewayAPI}},
+		{"letsEncrypt tls needs cert-manager", Modes{TLSSource: tlsLetsEncrypt}, []Dep{DepCertManager}},
 		{"issuerRef tls needs cert-manager", Modes{TLSSource: "issuerRef"}, []Dep{DepCertManager}},
 		{"secret tls needs nothing", Modes{TLSSource: "secret"}, nil},
 		{
 			"managed-ha everything",
-			Modes{DBManaged: true, MessagingManaged: true, KeycloakManaged: true, Edge: "gatewayAPI", TLSSource: "letsEncrypt"},
+			Modes{DBManaged: true, MessagingManaged: true, KeycloakManaged: true, Edge: edgeGatewayAPI, TLSSource: tlsLetsEncrypt},
 			[]Dep{DepCNPG, DepRabbitMQ, DepKeycloak, DepGatewayAPI, DepCertManager},
 		},
 	}

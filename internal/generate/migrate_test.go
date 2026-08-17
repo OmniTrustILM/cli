@@ -37,24 +37,24 @@ database:
 messaging:
   host: mq.example.com
 `)
-	out, err := Migrate(values, "ilm", "ilm")
+	out, err := Migrate(values, genILM, genILM)
 	require.NoError(t, err)
 	assert.Contains(t, out, "kind: Platform")
 	assert.Contains(t, out, "name: ilm")
 }
 
 func TestMigrate_EmptyValuesStillRenders(t *testing.T) {
-	out, err := Migrate([]byte("{}"), "ilm", "ilm")
+	out, err := Migrate([]byte("{}"), genILM, genILM)
 	require.NoError(t, err)
 	assert.Contains(t, out, "kind: Platform")
 }
 
 func TestMigrate_InvalidYAML(t *testing.T) {
-	_, err := Migrate([]byte("::: not yaml :::"), "ilm", "ilm")
+	_, err := Migrate([]byte("::: not yaml :::"), genILM, genILM)
 	assert.Error(t, err)
 }
 
 func TestMigrate_EmptyName(t *testing.T) {
-	_, err := Migrate([]byte("{}"), "", "ilm")
+	_, err := Migrate([]byte("{}"), "", genILM)
 	assert.Error(t, err)
 }

@@ -92,35 +92,35 @@ func platform(ns, name string) *otilmv1alpha1.Platform {
 
 func TestClient_PlatformGetAndList(t *testing.T) {
 	c := NewFakeClient(t, FakeClientOptions{
-		Objects: []ctrlclient.Object{platform("ilm", k8sAlpha), platform("ilm", "beta")},
+		Objects: []ctrlclient.Object{platform(k8sILM, k8sAlpha), platform(k8sILM, "beta")},
 	})
-	got, err := c.GetPlatform(context.Background(), "ilm", k8sAlpha)
+	got, err := c.GetPlatform(context.Background(), k8sILM, k8sAlpha)
 	require.NoError(t, err)
 	assert.Equal(t, otilmv1alpha1.PlatformPhaseRunning, got.Status.Phase)
 
-	list, err := c.ListPlatforms(context.Background(), "ilm")
+	list, err := c.ListPlatforms(context.Background(), k8sILM)
 	require.NoError(t, err)
 	assert.Len(t, list.Items, 2)
 }
 
 func TestClient_ConnectorAndProxyGet(t *testing.T) {
-	conn := &otilmv1alpha1.Connector{ObjectMeta: metav1.ObjectMeta{Namespace: "ilm", Name: "c1"}}
-	prx := &otilmv1alpha1.Proxy{ObjectMeta: metav1.ObjectMeta{Namespace: "ilm", Name: "p1"}}
+	conn := &otilmv1alpha1.Connector{ObjectMeta: metav1.ObjectMeta{Namespace: k8sILM, Name: "c1"}}
+	prx := &otilmv1alpha1.Proxy{ObjectMeta: metav1.ObjectMeta{Namespace: k8sILM, Name: "p1"}}
 	c := NewFakeClient(t, FakeClientOptions{Objects: []ctrlclient.Object{conn, prx}})
 
-	gotConn, err := c.GetConnector(context.Background(), "ilm", "c1")
+	gotConn, err := c.GetConnector(context.Background(), k8sILM, "c1")
 	require.NoError(t, err)
 	assert.Equal(t, "c1", gotConn.Name)
 
-	gotPrx, err := c.GetProxy(context.Background(), "ilm", "p1")
+	gotPrx, err := c.GetProxy(context.Background(), k8sILM, "p1")
 	require.NoError(t, err)
 	assert.Equal(t, "p1", gotPrx.Name)
 
-	connList, err := c.ListConnectors(context.Background(), "ilm")
+	connList, err := c.ListConnectors(context.Background(), k8sILM)
 	require.NoError(t, err)
 	assert.Len(t, connList.Items, 1)
 
-	prxList, err := c.ListProxies(context.Background(), "ilm")
+	prxList, err := c.ListProxies(context.Background(), k8sILM)
 	require.NoError(t, err)
 	assert.Len(t, prxList.Items, 1)
 }
@@ -143,45 +143,45 @@ func TestClient_OperatorDeployment_NotFound(t *testing.T) {
 
 func TestClient_DeploymentsForPlatform(t *testing.T) {
 	mine := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{
-		Namespace: "ilm", Name: "core",
-		Labels: map[string]string{"app.kubernetes.io/managed-by": "ilm-operator", "otilm.com/platform": "ilm"},
+		Namespace: k8sILM, Name: k8sCore,
+		Labels: map[string]string{"app.kubernetes.io/managed-by": "ilm-operator", "otilm.com/platform": k8sILM},
 	}}
 	other := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{
-		Namespace: "ilm", Name: "unrelated",
+		Namespace: k8sILM, Name: "unrelated",
 		Labels: map[string]string{"app.kubernetes.io/managed-by": "someone-else"},
 	}}
 	c := NewFakeClient(t, FakeClientOptions{Objects: []ctrlclient.Object{mine, other}})
-	deps, err := c.DeploymentsForPlatform(context.Background(), "ilm", "ilm")
+	deps, err := c.DeploymentsForPlatform(context.Background(), k8sILM, k8sILM)
 	require.NoError(t, err)
 	require.Len(t, deps, 1)
-	assert.Equal(t, "core", deps[0].Name)
+	assert.Equal(t, k8sCore, deps[0].Name)
 }
 
 func TestClient_PodsFor(t *testing.T) {
 	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{
-		Namespace: "ilm", Name: k8sCoreZero, Labels: map[string]string{"app": "core"},
+		Namespace: k8sILM, Name: k8sCoreZero, Labels: map[string]string{k8sAppLabel: k8sCore},
 	}}
 	c := NewFakeClient(t, FakeClientOptions{Objects: []ctrlclient.Object{pod}})
-	pods, err := c.PodsFor(context.Background(), "ilm", map[string]string{"app": "core"})
+	pods, err := c.PodsFor(context.Background(), k8sILM, map[string]string{k8sAppLabel: k8sCore})
 	require.NoError(t, err)
 	require.Len(t, pods, 1)
 	assert.Equal(t, k8sCoreZero, pods[0].Name)
 }
 
 func TestClient_Events(t *testing.T) {
-	plat := platform("ilm", k8sAlpha)
-	plat.UID = "uid-1"
+	plat := platform(k8sILM, k8sAlpha)
+	plat.UID = k8sPlatformUID
 	ev := &corev1.Event{
-		ObjectMeta:     metav1.ObjectMeta{Namespace: "ilm", Name: "ev1"},
-		InvolvedObject: corev1.ObjectReference{Namespace: "ilm", Name: k8sAlpha, UID: "uid-1"},
+		ObjectMeta:     metav1.ObjectMeta{Namespace: k8sILM, Name: "ev1"},
+		InvolvedObject: corev1.ObjectReference{Namespace: k8sILM, Name: k8sAlpha, UID: k8sPlatformUID},
 		Reason:         "Reconciled",
 	}
 	noise := &corev1.Event{
-		ObjectMeta:     metav1.ObjectMeta{Namespace: "ilm", Name: "ev2"},
-		InvolvedObject: corev1.ObjectReference{Namespace: "ilm", Name: "other", UID: "uid-2"},
+		ObjectMeta:     metav1.ObjectMeta{Namespace: k8sILM, Name: "ev2"},
+		InvolvedObject: corev1.ObjectReference{Namespace: k8sILM, Name: "other", UID: "uid-2"},
 	}
 	c := NewFakeClient(t, FakeClientOptions{Objects: []ctrlclient.Object{plat, ev, noise}})
-	events, err := c.Events(context.Background(), "ilm", plat)
+	events, err := c.Events(context.Background(), k8sILM, plat)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 	assert.Equal(t, "Reconciled", events[0].Reason)
@@ -189,53 +189,53 @@ func TestClient_Events(t *testing.T) {
 
 func TestClient_GetPlatform_NotFound(t *testing.T) {
 	c := NewFakeClient(t, FakeClientOptions{})
-	_, err := c.GetPlatform(context.Background(), "ilm", k8sNonexistent)
+	_, err := c.GetPlatform(context.Background(), k8sILM, k8sNonexistent)
 	require.Error(t, err)
 }
 
 func TestClient_ListPlatforms_Empty(t *testing.T) {
 	c := NewFakeClient(t, FakeClientOptions{})
-	list, err := c.ListPlatforms(context.Background(), "ilm")
+	list, err := c.ListPlatforms(context.Background(), k8sILM)
 	require.NoError(t, err)
 	assert.Empty(t, list.Items)
 }
 
 func TestClient_GetConnector_NotFound(t *testing.T) {
 	c := NewFakeClient(t, FakeClientOptions{})
-	_, err := c.GetConnector(context.Background(), "ilm", k8sNonexistent)
+	_, err := c.GetConnector(context.Background(), k8sILM, k8sNonexistent)
 	require.Error(t, err)
 }
 
 func TestClient_GetProxy_NotFound(t *testing.T) {
 	c := NewFakeClient(t, FakeClientOptions{})
-	_, err := c.GetProxy(context.Background(), "ilm", k8sNonexistent)
+	_, err := c.GetProxy(context.Background(), k8sILM, k8sNonexistent)
 	require.Error(t, err)
 }
 
 func TestClient_ListConnectors_Empty(t *testing.T) {
 	c := NewFakeClient(t, FakeClientOptions{})
-	list, err := c.ListConnectors(context.Background(), "ilm")
+	list, err := c.ListConnectors(context.Background(), k8sILM)
 	require.NoError(t, err)
 	assert.Empty(t, list.Items)
 }
 
 func TestClient_ListProxies_Empty(t *testing.T) {
 	c := NewFakeClient(t, FakeClientOptions{})
-	list, err := c.ListProxies(context.Background(), "ilm")
+	list, err := c.ListProxies(context.Background(), k8sILM)
 	require.NoError(t, err)
 	assert.Empty(t, list.Items)
 }
 
 func TestClient_PodsFor_Empty(t *testing.T) {
 	c := NewFakeClient(t, FakeClientOptions{})
-	pods, err := c.PodsFor(context.Background(), "ilm", map[string]string{"app": "gone"})
+	pods, err := c.PodsFor(context.Background(), k8sILM, map[string]string{k8sAppLabel: "gone"})
 	require.NoError(t, err)
 	assert.Empty(t, pods)
 }
 
 func TestClient_DeploymentsForPlatform_Empty(t *testing.T) {
 	c := NewFakeClient(t, FakeClientOptions{})
-	deps, err := c.DeploymentsForPlatform(context.Background(), "ilm", "absent")
+	deps, err := c.DeploymentsForPlatform(context.Background(), k8sILM, "absent")
 	require.NoError(t, err)
 	assert.Empty(t, deps)
 }
@@ -248,7 +248,7 @@ func TestClient_DeploymentsForPlatform_Empty(t *testing.T) {
 // failure seen against a live cluster).
 func TestClient_PodLogs_StreamsViaClientset(t *testing.T) {
 	c := NewFakeClient(t, FakeClientOptions{})
-	rc, err := c.PodLogs(context.Background(), "ilm", k8sCoreZero, "core", nil)
+	rc, err := c.PodLogs(context.Background(), k8sILM, k8sCoreZero, k8sCore, nil)
 	require.NoError(t, err)
 	defer func() { _ = rc.Close() }()
 	_, err = io.ReadAll(rc)
@@ -257,7 +257,7 @@ func TestClient_PodLogs_StreamsViaClientset(t *testing.T) {
 
 func TestClient_PodLogs_NilClientsetErrors(t *testing.T) {
 	c := &Client{} // no clientset wired
-	_, err := c.PodLogs(context.Background(), "ilm", k8sCoreZero, "core", nil)
+	_, err := c.PodLogs(context.Background(), k8sILM, k8sCoreZero, k8sCore, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "clientset")
 }

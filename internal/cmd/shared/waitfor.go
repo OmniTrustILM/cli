@@ -45,6 +45,9 @@ const waitPollInterval = 100 * time.Millisecond
 // ErrWaitTimeout is returned when the predicate is not satisfied before the deadline.
 var ErrWaitTimeout = errors.New("timed out waiting for condition")
 
+// waitKindPhase is the WaitTarget.Kind of a phase=<value> predicate.
+const waitKindPhase = "phase"
+
 // WaitTarget is a parsed --for predicate.
 type WaitTarget struct {
 	Kind  string // "condition" | "phase"
@@ -59,7 +62,7 @@ func ParseWaitFor(s string) (WaitTarget, error) {
 	}
 	kind := strings.TrimSpace(kv[0])
 	value := strings.TrimSpace(kv[1])
-	if kind != "condition" && kind != "phase" {
+	if kind != "condition" && kind != waitKindPhase {
 		return WaitTarget{}, fmt.Errorf("invalid --for kind %q: must be condition or phase", kind)
 	}
 	if value == "" {
@@ -103,7 +106,7 @@ func Wait(
 // met reports whether the predicate holds for the latest observed status.
 func met(t WaitTarget, conds []metav1.Condition, phase string, gen, observed int64) bool {
 	switch t.Kind {
-	case "phase":
+	case waitKindPhase:
 		return phase == t.Value
 	case "condition":
 		if health.ReconcileLagged(observed, gen) {

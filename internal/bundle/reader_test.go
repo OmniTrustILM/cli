@@ -88,7 +88,7 @@ func collectFixtureBundle(t *testing.T, format Format, ext string) string {
 	scheme, err := k8s.NewScheme()
 	require.NoError(t, err)
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ilm", Generation: 3},
+		ObjectMeta: metav1.ObjectMeta{Name: bundleNamespace, Namespace: bundleNamespace, Generation: 3},
 		Spec:       otilmv1alpha1.PlatformSpec{Version: bundleVer2180},
 		Status: otilmv1alpha1.PlatformStatus{
 			Phase:              otilmv1alpha1.PlatformPhaseDegraded,
@@ -121,8 +121,8 @@ func TestRead_ReconstructsSnapshotFromZip(t *testing.T) {
 
 	require.Len(t, snap.Platforms, 1)
 	rs := snap.Platforms[0]
-	assert.Equal(t, "ilm", rs.Name)
-	assert.Equal(t, "ilm", rs.Namespace)
+	assert.Equal(t, bundleNamespace, rs.Name)
+	assert.Equal(t, bundleNamespace, rs.Namespace)
 	assert.Equal(t, "Degraded", rs.Phase)
 	assert.EqualValues(t, 3, rs.Generation)
 	assert.EqualValues(t, 2, rs.ObservedGen)
@@ -173,7 +173,7 @@ func TestRead_FindingsMatchLiveBuilder(t *testing.T) {
 	// Divergence probe 3: Platform with managed DB mode requires CNPG.
 	// The Reporter has CNPG absent, so capabilityAnalyzer must emit a finding.
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ilm", Generation: 1},
+		ObjectMeta: metav1.ObjectMeta{Name: bundleNamespace, Namespace: bundleNamespace, Generation: 1},
 		Spec: otilmv1alpha1.PlatformSpec{
 			Version:  bundleVer2180,
 			Database: otilmv1alpha1.DatabaseSpec{Mode: "managed"},
@@ -190,7 +190,7 @@ func TestRead_FindingsMatchLiveBuilder(t *testing.T) {
 
 	// Connector Running; no refs.
 	conn := &otilmv1alpha1.Connector{
-		ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: "ilm", Generation: 1},
+		ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: bundleNamespace, Generation: 1},
 		Status: otilmv1alpha1.ConnectorStatus{
 			Phase:              otilmv1alpha1.ConnectorPhaseRunning,
 			ObservedGeneration: 1,
@@ -199,7 +199,7 @@ func TestRead_FindingsMatchLiveBuilder(t *testing.T) {
 
 	// Proxy Running; no SecretRef so both sides have nil SecretRefs.
 	prxy := &otilmv1alpha1.Proxy{
-		ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: "ilm", Generation: 1},
+		ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: bundleNamespace, Generation: 1},
 		Status: otilmv1alpha1.ProxyStatus{
 			Phase:              otilmv1alpha1.ProxyPhaseRunning,
 			ObservedGeneration: 1,
@@ -231,10 +231,10 @@ func TestRead_FindingsMatchLiveBuilder(t *testing.T) {
 	childDep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "ilm-core",
-			Namespace: "ilm",
+			Namespace: bundleNamespace,
 			Labels: map[string]string{
 				k8s.OperatorManagedByLabel: k8s.OperatorManagedByValue,
-				k8s.OperatorPlatformLabel:  "ilm",
+				k8s.OperatorPlatformLabel:  bundleNamespace,
 			},
 		},
 		Spec:   appsv1.DeploymentSpec{Replicas: &replicas},
@@ -321,26 +321,26 @@ func TestRead_FindingsMatchLiveBuilder(t *testing.T) {
 func TestRead_ConnectorAndProxyLogsAttached(t *testing.T) {
 	t.Parallel()
 	conn := &otilmv1alpha1.Connector{
-		ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: "ilm", Generation: 1},
+		ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: bundleNamespace, Generation: 1},
 		Status:     otilmv1alpha1.ConnectorStatus{Phase: otilmv1alpha1.ConnectorPhaseRunning, ObservedGeneration: 1},
 	}
 	prxy := &otilmv1alpha1.Proxy{
-		ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: "ilm", Generation: 1},
+		ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: bundleNamespace, Generation: 1},
 		Status:     otilmv1alpha1.ProxyStatus{Phase: otilmv1alpha1.ProxyPhaseRunning, ObservedGeneration: 1},
 	}
 	connPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "c1-pod", Namespace: "ilm",
-			Labels: map[string]string{"otilm.com/connector": "c1"},
+			Name: "c1-pod", Namespace: bundleNamespace,
+			Labels: map[string]string{connectorPodLabel: "c1"},
 		},
-		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "connector"}}},
+		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: workloadKindConnector}}},
 	}
 	proxyPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "p1-pod", Namespace: "ilm",
-			Labels: map[string]string{"otilm.com/proxy": "p1"},
+			Name: "p1-pod", Namespace: bundleNamespace,
+			Labels: map[string]string{proxyPodLabel: "p1"},
 		},
-		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "proxy"}}},
+		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: workloadKindProxy}}},
 	}
 	// NewFakeClient wires the fake clientset whose GetLogs returns canned content.
 	cl := k8s.NewFakeClient(t, k8s.FakeClientOptions{
@@ -391,7 +391,7 @@ func collectFullBundle(t *testing.T, format Format, ext string) string {
 	scheme, err := k8s.NewScheme()
 	require.NoError(t, err)
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ilm", Generation: 1},
+		ObjectMeta: metav1.ObjectMeta{Name: bundleNamespace, Namespace: bundleNamespace, Generation: 1},
 		Spec:       otilmv1alpha1.PlatformSpec{Version: bundleVer2180},
 		Status: otilmv1alpha1.PlatformStatus{
 			Phase:              otilmv1alpha1.PlatformPhaseRunning,
@@ -403,7 +403,7 @@ func collectFullBundle(t *testing.T, format Format, ext string) string {
 		},
 	}
 	conn := &otilmv1alpha1.Connector{
-		ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: "ilm", Generation: 1},
+		ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: bundleNamespace, Generation: 1},
 		Spec:       otilmv1alpha1.ConnectorSpec{},
 		Status: otilmv1alpha1.ConnectorStatus{
 			Phase:              otilmv1alpha1.ConnectorPhaseRunning,
@@ -411,7 +411,7 @@ func collectFullBundle(t *testing.T, format Format, ext string) string {
 		},
 	}
 	prxy := &otilmv1alpha1.Proxy{
-		ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: "ilm", Generation: 1},
+		ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: bundleNamespace, Generation: 1},
 		Spec: otilmv1alpha1.ProxySpec{
 			ConfigTokenSecretRef: otilmv1alpha1.ConfigTokenRef{Name: "proxy-token"},
 		},

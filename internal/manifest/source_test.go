@@ -445,7 +445,7 @@ metadata:
 	require.Len(t, objs, 2)
 	assert.Equal(t, "CustomResourceDefinition", objs[0].GetKind())
 	assert.Equal(t, "platforms.otilm.com", objs[0].GetName())
-	assert.Equal(t, "Deployment", objs[1].GetKind())
+	assert.Equal(t, kindDeployment, objs[1].GetKind())
 	assert.Equal(t, "ilm-operator-system", objs[1].GetNamespace())
 }
 

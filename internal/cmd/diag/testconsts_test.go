@@ -30,4 +30,6 @@ const (
 	diagEscapeTxt    = "escape.txt"
 	diagEscapeRelTxt = "../escape.txt"
 	diagCondRule     = "condition"
+	diagPlatformName = "ilm" // the fixture platform's name; some fixtures also use it as the namespace
+	diagVer2180      = "2.18.0"
 )

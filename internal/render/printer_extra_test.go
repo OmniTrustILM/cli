@@ -45,8 +45,8 @@ func TestFormatPtrForTest(t *testing.T) {
 	require.NotNil(t, ptr)
 
 	// Mutating via the pointer must be reflected in Format().
-	*ptr = "yaml"
-	assert.Equal(t, "yaml", p.Format())
+	*ptr = formatYAML
+	assert.Equal(t, formatYAML, p.Format())
 }
 
 // TestResolveColor_FromFlagSet_NoColor verifies that ResolveColor reads the

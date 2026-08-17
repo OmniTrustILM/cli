@@ -82,10 +82,10 @@ func ApplyOLM(ctx context.Context, c *k8s.Client, o OLMOptions) (ApplyResult, er
 
 func buildCatalogSource(ns, image string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": olmGroup + "/v1alpha1",
-		"kind":       "CatalogSource",
-		"metadata":   map[string]any{"name": olmCatalogName, "namespace": ns},
-		"spec": map[string]any{
+		keyAPIVersion: olmGroup + "/v1alpha1",
+		keyKind:       kindCatalogSource,
+		keyMetadata:   map[string]any{keyName: olmCatalogName, keyNamespace: ns},
+		keySpec: map[string]any{
 			"sourceType":  "grpc",
 			"image":       image,
 			"displayName": "OmniTrust ILM Operators",
@@ -96,21 +96,21 @@ func buildCatalogSource(ns, image string) *unstructured.Unstructured {
 
 func buildOperatorGroup(ns string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": olmGroup + "/v1",
-		"kind":       "OperatorGroup",
-		"metadata":   map[string]any{"name": olmGroupName, "namespace": ns},
-		"spec":       map[string]any{"targetNamespaces": []any{ns}},
+		keyAPIVersion: olmGroup + "/v1",
+		keyKind:       "OperatorGroup",
+		keyMetadata:   map[string]any{keyName: olmGroupName, keyNamespace: ns},
+		keySpec:       map[string]any{"targetNamespaces": []any{ns}},
 	}}
 }
 
 func buildSubscription(ns, channel string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": olmGroup + "/v1alpha1",
-		"kind":       "Subscription",
-		"metadata":   map[string]any{"name": olmSubscriptionName, "namespace": ns},
-		"spec": map[string]any{
+		keyAPIVersion: olmGroup + "/v1alpha1",
+		keyKind:       "Subscription",
+		keyMetadata:   map[string]any{keyName: olmSubscriptionName, keyNamespace: ns},
+		keySpec: map[string]any{
 			"channel":             channel,
-			"name":                olmPackageName,
+			keyName:               olmPackageName,
 			"source":              olmCatalogName,
 			"sourceNamespace":     ns,
 			"installPlanApproval": "Automatic",

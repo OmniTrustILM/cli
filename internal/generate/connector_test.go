@@ -29,12 +29,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	// connectorFoo is the connector name in the image-note tests.
+	connectorFoo = "foo"
+	// minimalImage is the smallest well-formed image reference the options accept.
+	minimalImage = "x:1"
+)
+
 func int32Ptr(i int32) *int32 { return &i }
 
 func TestScaffoldConnector_FullImageAndRegistration(t *testing.T) {
 	c, notes, err := ScaffoldConnector(ConnectorOptions{
 		Name:        genCryptosense,
-		Namespace:   "ilm",
+		Namespace:   genILM,
 		Image:       "harbor.example.com/ilm/connector-cryptosense:1.4.0",
 		PlatformURL: genILMURL,
 		RegName:     genCryptosense,
@@ -60,7 +67,7 @@ func TestScaffoldConnector_FullImageAndRegistration(t *testing.T) {
 
 func TestScaffoldConnector_SimpleRepoTag(t *testing.T) {
 	c, _, err := ScaffoldConnector(ConnectorOptions{
-		Name: "demo", Namespace: "ilm", Image: "connector-demo:2.0.0", AuthType: "none",
+		Name: "demo", Namespace: genILM, Image: "connector-demo:2.0.0", AuthType: authTypeNone,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, genConnectorDemo, c.Spec.Image.Repository)
@@ -72,7 +79,7 @@ func TestScaffoldConnector_SimpleRepoTag(t *testing.T) {
 func TestScaffoldConnector_NoRegistrationWhenAuthTypeOnlyNone(t *testing.T) {
 	// AuthType "none" with no PlatformURL/RegName => registration nil (not an error)
 	c, _, err := ScaffoldConnector(ConnectorOptions{
-		Name: "c", Namespace: "ilm", Image: "x:1", AuthType: "none",
+		Name: "c", Namespace: genILM, Image: minimalImage, AuthType: authTypeNone,
 	})
 	require.NoError(t, err)
 	assert.Nil(t, c.Spec.Registration)
@@ -83,11 +90,11 @@ func TestScaffoldConnector_Validation(t *testing.T) {
 		name string
 		o    ConnectorOptions
 	}{
-		{"empty name", ConnectorOptions{Name: "", Namespace: "ilm", Image: "x:1", AuthType: "none"}},
-		{"empty image", ConnectorOptions{Name: "c", Namespace: "ilm", Image: "", AuthType: "none"}},
-		{"image without tag", ConnectorOptions{Name: "c", Namespace: "ilm", Image: genConnectorDemo, AuthType: "none"}},
-		{"bad auth-type", ConnectorOptions{Name: "c", Namespace: "ilm", Image: "x:1", AuthType: "kerberos"}},
-		{"registration name without platform-url", ConnectorOptions{Name: "c", Namespace: "ilm", Image: "x:1", AuthType: "none", RegName: "c"}},
+		{genEmptyName, ConnectorOptions{Name: "", Namespace: genILM, Image: minimalImage, AuthType: authTypeNone}},
+		{"empty image", ConnectorOptions{Name: "c", Namespace: genILM, Image: "", AuthType: authTypeNone}},
+		{"image without tag", ConnectorOptions{Name: "c", Namespace: genILM, Image: genConnectorDemo, AuthType: authTypeNone}},
+		{"bad auth-type", ConnectorOptions{Name: "c", Namespace: genILM, Image: minimalImage, AuthType: "kerberos"}},
+		{"registration name without platform-url", ConnectorOptions{Name: "c", Namespace: genILM, Image: minimalImage, AuthType: authTypeNone, RegName: "c"}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -98,11 +105,11 @@ func TestScaffoldConnector_Validation(t *testing.T) {
 }
 
 func TestScaffoldConnector_AllAuthTypes(t *testing.T) {
-	validTypes := []string{"none", "basic", "certificate", genAPIKey, "jwt"}
+	validTypes := []string{authTypeNone, "basic", "certificate", genAPIKey, "jwt"}
 	for _, at := range validTypes {
 		t.Run(at, func(t *testing.T) {
 			_, _, err := ScaffoldConnector(ConnectorOptions{
-				Name: "c", Namespace: "ilm", Image: "img:1",
+				Name: "c", Namespace: genILM, Image: "img:1",
 				PlatformURL: genILMURL, RegName: "c", AuthType: at,
 			})
 			require.NoError(t, err)
@@ -112,7 +119,7 @@ func TestScaffoldConnector_AllAuthTypes(t *testing.T) {
 
 func TestScaffoldConnector_TypeMeta(t *testing.T) {
 	c, _, err := ScaffoldConnector(ConnectorOptions{
-		Name: "demo", Namespace: "test", Image: "img:1", AuthType: "none",
+		Name: "demo", Namespace: "test", Image: "img:1", AuthType: authTypeNone,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "Connector", c.Kind)
@@ -124,14 +131,14 @@ func TestScaffoldConnector_TypeMeta(t *testing.T) {
 func TestScaffoldConnector_ReplicasPointer(t *testing.T) {
 	// no replicas => nil pointer
 	c, _, err := ScaffoldConnector(ConnectorOptions{
-		Name: "c", Namespace: "ilm", Image: "x:1", AuthType: "none",
+		Name: "c", Namespace: genILM, Image: minimalImage, AuthType: authTypeNone,
 	})
 	require.NoError(t, err)
 	assert.Nil(t, c.Spec.Replicas)
 
 	// with replicas
 	c2, _, err := ScaffoldConnector(ConnectorOptions{
-		Name: "c", Namespace: "ilm", Image: "x:1", AuthType: "none", Replicas: int32Ptr(3),
+		Name: "c", Namespace: genILM, Image: minimalImage, AuthType: authTypeNone, Replicas: int32Ptr(3),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, c2.Spec.Replicas)
@@ -141,7 +148,7 @@ func TestScaffoldConnector_ReplicasPointer(t *testing.T) {
 func TestScaffoldConnector_FullRegistrationWithPlatformURL(t *testing.T) {
 	// PlatformURL without RegName should error
 	_, _, err := ScaffoldConnector(ConnectorOptions{
-		Name: "c", Namespace: "ilm", Image: "x:1", AuthType: "none",
+		Name: "c", Namespace: genILM, Image: minimalImage, AuthType: authTypeNone,
 		PlatformURL: genILMURL,
 	})
 	assert.Error(t, err)
@@ -151,9 +158,9 @@ func TestScaffoldConnector_DigestWithTag_NoSlash(t *testing.T) {
 	// "name:tag@sha256:<hex>" — no registry prefix
 	const digest = "sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 	c, notes, err := ScaffoldConnector(ConnectorOptions{
-		Name: "foo", Namespace: "ilm",
+		Name: connectorFoo, Namespace: genILM,
 		Image:    "connector-foo:1.0@" + digest,
-		AuthType: "none",
+		AuthType: authTypeNone,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "connector-foo", c.Spec.Image.Repository)
@@ -162,7 +169,7 @@ func TestScaffoldConnector_DigestWithTag_NoSlash(t *testing.T) {
 	assert.Equal(t, digest, c.Spec.Image.Digest)
 	var digestNote bool
 	for _, n := range notes {
-		if n.Field == "image.digest" {
+		if n.Field == fieldImageDigest {
 			digestNote = true
 			assert.Equal(t, digest, n.Value)
 		}
@@ -174,9 +181,9 @@ func TestScaffoldConnector_DigestWithTag_FullRegistry(t *testing.T) {
 	// "harbor.example.com/ilm/connector-foo:tag@sha256:<hex>"
 	const digest = "sha256:deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 	c, _, err := ScaffoldConnector(ConnectorOptions{
-		Name: "foo", Namespace: "ilm",
+		Name: connectorFoo, Namespace: genILM,
 		Image:    "harbor.example.com/ilm/connector-foo:2.3.1@" + digest,
-		AuthType: "none",
+		AuthType: authTypeNone,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "harbor.example.com/ilm", c.Spec.Image.Repository)
@@ -189,9 +196,9 @@ func TestScaffoldConnector_DigestWithTag_RegistryPort(t *testing.T) {
 	// "host:5000/repo/name:tag@sha256:<hex>" — registry port must not be mistaken for tag
 	const digest = "sha256:cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe"
 	c, _, err := ScaffoldConnector(ConnectorOptions{
-		Name: "foo", Namespace: "ilm",
+		Name: connectorFoo, Namespace: genILM,
 		Image:    "host:5000/repo/name:stable@" + digest,
-		AuthType: "none",
+		AuthType: authTypeNone,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "host:5000/repo", c.Spec.Image.Repository)
@@ -205,9 +212,9 @@ func TestScaffoldConnector_DigestOnly_Rejected(t *testing.T) {
 	// XValidation requires has(self.tag). Caller must also supply a tag.
 	const digest = "sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 	_, _, err := ScaffoldConnector(ConnectorOptions{
-		Name: "foo", Namespace: "ilm",
+		Name: connectorFoo, Namespace: genILM,
 		Image:    "connector-foo@" + digest,
-		AuthType: "none",
+		AuthType: authTypeNone,
 	})
 	assert.Error(t, err)
 }
@@ -215,7 +222,7 @@ func TestScaffoldConnector_DigestOnly_Rejected(t *testing.T) {
 func TestScaffoldConnector_NoTagNoDigest_Rejected(t *testing.T) {
 	// Neither tag nor digest should still error.
 	_, _, err := ScaffoldConnector(ConnectorOptions{
-		Name: "c", Namespace: "ilm", Image: genConnectorDemo, AuthType: "none",
+		Name: "c", Namespace: genILM, Image: genConnectorDemo, AuthType: authTypeNone,
 	})
 	assert.Error(t, err)
 }

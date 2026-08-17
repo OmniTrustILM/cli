@@ -41,7 +41,7 @@ func TestProxyGenerate_Apply_DryRunClient(t *testing.T) {
 	o, out := newTestOptions()
 	cmd := NewGenerateCommand(o)
 	cmd.SetArgs([]string{
-		proxyFlagName, proxyEgress, "--namespace", "ilm",
+		proxyFlagName, proxyEgress, proxyFlagNS, proxyNamespace,
 		proxyFlagConfigToken, proxyEgressToken,
 		"--apply", "--dry-run=client",
 	})
@@ -62,7 +62,7 @@ func TestProxyGenerate_Apply_DryRunServer(t *testing.T) {
 	o, out := newTestOptions()
 	cmd := NewGenerateCommand(o)
 	cmd.SetArgs([]string{
-		proxyFlagName, proxyEgress, "--namespace", "ilm",
+		proxyFlagName, proxyEgress, proxyFlagNS, proxyNamespace,
 		proxyFlagConfigToken, proxyEgressToken,
 		"--apply", "--dry-run=server",
 	})

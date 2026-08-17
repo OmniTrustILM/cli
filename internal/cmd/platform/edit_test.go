@@ -47,18 +47,18 @@ func fakeEditorScript(t *testing.T) string {
 func TestEdit_AppliesEditedBuffer(t *testing.T) {
 	p := &otilmv1alpha1.Platform{
 		TypeMeta:   metav1.TypeMeta{APIVersion: platformAPIGroup, Kind: platformKind},
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ilm"},
+		ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: platformName},
 		Spec: otilmv1alpha1.PlatformSpec{
 			DeletionPolicy: otilmv1alpha1.PlatformDeletionPolicyRetain,
-			Database:       otilmv1alpha1.DatabaseSpec{Mode: "external"},
-			Messaging:      otilmv1alpha1.MessagingSpec{Mode: "external"},
+			Database:       otilmv1alpha1.DatabaseSpec{Mode: modeExternal},
+			Messaging:      otilmv1alpha1.MessagingSpec{Mode: modeExternal},
 		},
 	}
 	o, out := newFakeOptions(t, p)
 
 	t.Setenv("EDITOR", fakeEditorScript(t))
 	cmd := NewEditCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "--force-conflicts"})
+	cmd.SetArgs([]string{platformName, "-n", platformName, "--force-conflicts"})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -78,7 +78,7 @@ func TestEdit_RequiresName(t *testing.T) {
 func TestEdit_NoopWhenUnchanged(t *testing.T) {
 	p := &otilmv1alpha1.Platform{
 		TypeMeta:   metav1.TypeMeta{APIVersion: platformAPIGroup, Kind: platformKind},
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ilm"},
+		ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: platformName},
 		Spec:       otilmv1alpha1.PlatformSpec{DeletionPolicy: otilmv1alpha1.PlatformDeletionPolicyRetain},
 	}
 	o, out := newFakeOptions(t, p)
@@ -90,7 +90,7 @@ func TestEdit_NoopWhenUnchanged(t *testing.T) {
 	t.Setenv("EDITOR", script)
 
 	cmd := NewEditCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm"})
+	cmd.SetArgs([]string{platformName, "-n", platformName})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)

@@ -38,7 +38,7 @@ func TestMigrate_FromValuesFile(t *testing.T) {
 
 	o, out, _ := newTestOptions(nil)
 	cmd := NewMigrateCommand(o)
-	cmd.SetArgs([]string{"--values", vf, platformFlagName, "ilm", "--namespace", "ilm"})
+	cmd.SetArgs([]string{"--values", vf, platformFlagName, platformName, platformFlagNS, platformName})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	require.NoError(t, cmd.Execute())
@@ -48,7 +48,7 @@ func TestMigrate_FromValuesFile(t *testing.T) {
 func TestMigrate_MissingValuesFile(t *testing.T) {
 	o, out, _ := newTestOptions(nil)
 	cmd := NewMigrateCommand(o)
-	cmd.SetArgs([]string{"--values", "/nonexistent/values.yaml", platformFlagName, "ilm"})
+	cmd.SetArgs([]string{"--values", "/nonexistent/values.yaml", platformFlagName, platformName})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	assert.Error(t, cmd.Execute())
@@ -57,7 +57,7 @@ func TestMigrate_MissingValuesFile(t *testing.T) {
 func TestMigrate_RequiresValues(t *testing.T) {
 	o, out, _ := newTestOptions(nil)
 	cmd := NewMigrateCommand(o)
-	cmd.SetArgs([]string{platformFlagName, "ilm"})
+	cmd.SetArgs([]string{platformFlagName, platformName})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	assert.Error(t, cmd.Execute())

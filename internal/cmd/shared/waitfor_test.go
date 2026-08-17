@@ -47,7 +47,7 @@ func TestParseWaitFor(t *testing.T) {
 		wantErr bool
 	}{
 		{condKind, waitCondAvailable, WaitTarget{Kind: condKind, Value: condAvailable}, false},
-		{"phase", "phase=Running", WaitTarget{Kind: "phase", Value: "Running"}, false},
+		{waitKindPhase, "phase=Running", WaitTarget{Kind: waitKindPhase, Value: "Running"}, false},
 		{"trim spaces", " condition = Available ", WaitTarget{Kind: condKind, Value: condAvailable}, false},
 		{"empty", "", WaitTarget{}, true},
 		{"no equals", condKind, WaitTarget{}, true},

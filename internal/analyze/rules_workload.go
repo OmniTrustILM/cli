@@ -136,10 +136,13 @@ func evalPod(ref, rule string, thresh int32, p *corev1.Pod) []Finding {
 	return out
 }
 
+// reasonOOMKilled is the kubelet's termination reason for an OOM-killed container.
+const reasonOOMKilled = "OOMKilled"
+
 func oomKilled(cs corev1.ContainerStatus) bool {
-	if cs.State.Terminated != nil && cs.State.Terminated.Reason == "OOMKilled" {
+	if cs.State.Terminated != nil && cs.State.Terminated.Reason == reasonOOMKilled {
 		return true
 	}
 	return cs.LastTerminationState.Terminated != nil &&
-		cs.LastTerminationState.Terminated.Reason == "OOMKilled"
+		cs.LastTerminationState.Terminated.Reason == reasonOOMKilled
 }

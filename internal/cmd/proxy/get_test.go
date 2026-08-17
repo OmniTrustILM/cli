@@ -110,6 +110,9 @@ func TestNewProxyCommand_SubcommandRegistration(t *testing.T) {
 	out, errOut := &bytes.Buffer{}, &bytes.Buffer{}
 	o := &cli.Options{Printer: render.NewPrinter(out, errOut)}
 	cmd := NewProxyCommand(o)
+	// Literal on purpose: the command sets Use from proxyKind, so asserting against
+	// that same constant would pass whatever value it held. This pins the invocation
+	// name users type.
 	assert.Equal(t, "proxy", cmd.Use)
 	assert.Equal(t, string(cli.GroupResources), cmd.GroupID)
 	assert.Contains(t, cmd.Aliases, "prx")

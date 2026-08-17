@@ -44,7 +44,7 @@ func runCompletion(t *testing.T, invokedAs string, args ...string) (string, erro
 }
 
 func TestCompletion_Shells(t *testing.T) {
-	for _, shell := range []string{"bash", "zsh", "fish", "powershell"} {
+	for _, shell := range []string{shellBash, shellZsh, shellFish, shellPowershell} {
 		t.Run(shell, func(t *testing.T) {
 			out, err := runCompletion(t, cliILMCtl, shell)
 			require.NoError(t, err)
@@ -73,7 +73,7 @@ func TestCompletion_BashMentionsInvocationName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.invokedAs, func(t *testing.T) {
-			out, err := runCompletion(t, tt.invokedAs, "bash")
+			out, err := runCompletion(t, tt.invokedAs, shellBash)
 			require.NoError(t, err)
 			assert.Contains(t, out, tt.wantToken)
 		})

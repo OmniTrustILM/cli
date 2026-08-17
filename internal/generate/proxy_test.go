@@ -31,7 +31,7 @@ import (
 
 func TestScaffoldProxy_Defaults(t *testing.T) {
 	p, notes, err := ScaffoldProxy(ProxyOptions{
-		Name: genEgress, Namespace: "ilm", ConfigTokenSecret: genEgressConfigToken,
+		Name: genEgress, Namespace: genILM, ConfigTokenSecret: genEgressConfigToken,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, p)
@@ -45,7 +45,7 @@ func TestScaffoldProxy_Defaults(t *testing.T) {
 
 func TestScaffoldProxy_ImageAndReplicas(t *testing.T) {
 	p, _, err := ScaffoldProxy(ProxyOptions{
-		Name: genEgress, Namespace: "ilm", ConfigTokenSecret: genEgressConfigToken,
+		Name: genEgress, Namespace: genILM, ConfigTokenSecret: genEgressConfigToken,
 		Image: "harbor.example.com/ilm/proxy:2.18.0", Replicas: int32Ptr(3),
 	})
 	require.NoError(t, err)
@@ -62,9 +62,9 @@ func TestScaffoldProxy_Validation(t *testing.T) {
 		name string
 		o    ProxyOptions
 	}{
-		{"empty name", ProxyOptions{Name: "", Namespace: "ilm", ConfigTokenSecret: "t"}},
-		{"empty config-token-secret", ProxyOptions{Name: "p", Namespace: "ilm", ConfigTokenSecret: ""}},
-		{"bad image", ProxyOptions{Name: "p", Namespace: "ilm", ConfigTokenSecret: "t", Image: "noTag"}},
+		{genEmptyName, ProxyOptions{Name: "", Namespace: genILM, ConfigTokenSecret: "t"}},
+		{"empty config-token-secret", ProxyOptions{Name: "p", Namespace: genILM, ConfigTokenSecret: ""}},
+		{"bad image", ProxyOptions{Name: "p", Namespace: genILM, ConfigTokenSecret: "t", Image: "noTag"}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -87,7 +87,7 @@ func TestScaffoldProxy_TypeMeta(t *testing.T) {
 
 func TestScaffoldProxy_NoImage(t *testing.T) {
 	p, notes, err := ScaffoldProxy(ProxyOptions{
-		Name: "p", Namespace: "ilm", ConfigTokenSecret: "tok",
+		Name: "p", Namespace: genILM, ConfigTokenSecret: "tok",
 	})
 	require.NoError(t, err)
 	assert.Nil(t, p.Spec.Image)
@@ -97,7 +97,7 @@ func TestScaffoldProxy_NoImage(t *testing.T) {
 
 func TestScaffoldProxy_ConfigTokenSecretRefNotes(t *testing.T) {
 	_, notes, err := ScaffoldProxy(ProxyOptions{
-		Name: "p", Namespace: "ilm", ConfigTokenSecret: "my-secret",
+		Name: "p", Namespace: genILM, ConfigTokenSecret: "my-secret",
 	})
 	require.NoError(t, err)
 	var found bool

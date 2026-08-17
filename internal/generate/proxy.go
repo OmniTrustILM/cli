@@ -82,7 +82,7 @@ func ScaffoldProxy(o ProxyOptions) (*otilmv1alpha1.Proxy, []EffectiveNote, error
 			EffectiveNote{Field: "image.tag", Value: img.tag, Source: sourceFlag},
 		)
 		if img.digest != "" {
-			notes = append(notes, EffectiveNote{Field: "image.digest", Value: img.digest, Source: sourceFlag})
+			notes = append(notes, EffectiveNote{Field: fieldImageDigest, Value: img.digest, Source: sourceFlag})
 		}
 	}
 

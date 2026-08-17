@@ -46,6 +46,9 @@ const (
 	platformFlagName  = "--name"
 	platformFlagProf  = "--profile"
 	platformExternal  = "external"
+	platformName      = "ilm" // the fixture platform's name; the tests deploy it into a namesake namespace
+	platformFlagNS    = "--namespace"
+	platformFlagTo    = "--to"
 	platformILMDomain = "ilm.example.com"
 	platformDeleted   = "deleted"
 	errNoDowngrade    = "no downgrade"

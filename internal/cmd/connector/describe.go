@@ -141,11 +141,15 @@ func printConnectorEvents(ctx context.Context, w io.Writer, c *k8s.Client, p *re
 	return p.PrintTable(tbl)
 }
 
+// connectorPodLabel is the operator-applied pod label key carrying the owning
+// Connector's name.
+const connectorPodLabel = "otilm.com/connector"
+
 // connectorPodSelector returns the label selector that uniquely matches a
 // connector's own pods. The workload pods carry otilm.com/connector=<name>,
 // which is the canonical selector for a single connector's pods.
 func connectorPodSelector(name string) map[string]string {
 	return map[string]string{
-		"otilm.com/connector": name,
+		connectorPodLabel: name,
 	}
 }

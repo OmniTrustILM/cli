@@ -61,22 +61,22 @@ func TestWorkloadAnalyzer(t *testing.T) {
 	t.Run("deployment below desired is fail", func(t *testing.T) {
 		t.Parallel()
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
-			Deployments: []appsv1.Deployment{deploy("core", ptrInt32(3), 1)},
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
+			Deployments: []appsv1.Deployment{deploy(analyzeCoreComponent, ptrInt32(3), 1)},
 		}}}
 		got := a.Analyze(s)
 		require.Len(t, got, 1)
 		assert.Equal(t, SeverityFail, got[0].Severity)
 		assert.Equal(t, "workload", got[0].Rule)
-		assert.Contains(t, got[0].Evidence, "core")
+		assert.Contains(t, got[0].Evidence, analyzeCoreComponent)
 		assert.Contains(t, got[0].Evidence, "1/3")
 	})
 
 	t.Run("healthy deployment emits nothing", func(t *testing.T) {
 		t.Parallel()
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
-			Deployments: []appsv1.Deployment{deploy("core", ptrInt32(2), 2)},
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
+			Deployments: []appsv1.Deployment{deploy(analyzeCoreComponent, ptrInt32(2), 2)},
 		}}}
 		assert.Empty(t, a.Analyze(s))
 	})
@@ -84,8 +84,8 @@ func TestWorkloadAnalyzer(t *testing.T) {
 	t.Run("crashloop pod is fail", func(t *testing.T) {
 		t.Parallel()
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
-			Pods: []corev1.Pod{waitingPod("core-abc", "core", "CrashLoopBackOff")},
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
+			Pods: []corev1.Pod{waitingPod("core-abc", analyzeCoreComponent, "CrashLoopBackOff")},
 		}}}
 		got := a.Analyze(s)
 		require.Len(t, got, 1)
@@ -97,7 +97,7 @@ func TestWorkloadAnalyzer(t *testing.T) {
 	t.Run("imagepull pod is fail", func(t *testing.T) {
 		t.Parallel()
 		s := &Snapshot{Connectors: []ResourceSnapshot{{
-			GVK: "Connector.otilm.com/v1alpha1", Namespace: "ns", Name: "c",
+			GVK: GVKConnector, Namespace: "ns", Name: "c",
 			Pods: []corev1.Pod{waitingPod("c-xyz", "connector", "ImagePullBackOff")},
 		}}}
 		got := a.Analyze(s)
@@ -112,14 +112,14 @@ func TestWorkloadAnalyzer(t *testing.T) {
 			Status: corev1.PodStatus{
 				Phase: corev1.PodRunning,
 				ContainerStatuses: []corev1.ContainerStatus{{
-					Name:         "core",
+					Name:         analyzeCoreComponent,
 					RestartCount: 12,
 					State:        corev1.ContainerState{Running: &corev1.ContainerStateRunning{}},
 				}},
 			},
 		}
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
 			Pods: []corev1.Pod{pod},
 		}}}
 		got := a.Analyze(s)
@@ -134,21 +134,21 @@ func TestWorkloadAnalyzer(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "core-2", Namespace: "ns"},
 			Status: corev1.PodStatus{
 				ContainerStatuses: []corev1.ContainerStatus{{
-					Name: "core",
+					Name: analyzeCoreComponent,
 					State: corev1.ContainerState{
-						Terminated: &corev1.ContainerStateTerminated{Reason: "OOMKilled"},
+						Terminated: &corev1.ContainerStateTerminated{Reason: reasonOOMKilled},
 					},
 				}},
 			},
 		}
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
 			Pods: []corev1.Pod{pod},
 		}}}
 		got := a.Analyze(s)
 		require.Len(t, got, 1)
 		assert.Equal(t, SeverityFail, got[0].Severity)
-		assert.Contains(t, got[0].Evidence, "OOMKilled")
+		assert.Contains(t, got[0].Evidence, reasonOOMKilled)
 	})
 }
 

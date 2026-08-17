@@ -45,6 +45,9 @@ func newReporter(c *k8s.Client) *capabilities.Reporter {
 // modeManaged is the "managed" string literal used in Platform mode flags.
 const modeManaged = "managed"
 
+// checkCommand is the subcommand's name; synthesised findings reuse it as their Rule.
+const checkCommand = "check"
+
 type checkOptions struct {
 	Pre           bool
 	Namespaces    []string
@@ -67,7 +70,7 @@ func NewCheckCommand(o *cli.Options) *cobra.Command {
 func newCheckCommandFromOpts(o *cli.Options, opts *checkOptions) *cobra.Command {
 	var dbMode, msgMode, kcMode, edge, tls string
 	cmd := &cobra.Command{
-		Use:     "check",
+		Use:     checkCommand,
 		Aliases: []string{"doctor"},
 		Short:   "Diagnose prerequisites (--pre) or running health via the analyzer engine",
 		GroupID: string(cli.GroupInfrastructure),
@@ -131,7 +134,7 @@ func runCheck(ctx context.Context, c *k8s.Client, rep *capabilities.Reporter, p 
 		findings = analyze.DefaultRegistry().Run(snap)
 	}
 	if len(findings) == 0 {
-		findings = []analyze.Finding{{Severity: analyze.SeverityOK, Title: "no issues found", Rule: "check"}}
+		findings = []analyze.Finding{{Severity: analyze.SeverityOK, Title: "no issues found", Rule: checkCommand}}
 	}
 	if err := p.PrintFindings(findings); err != nil {
 		return analyze.SeverityOK, err
@@ -145,7 +148,7 @@ func preFindings(rep *capabilities.Reporter, modes capabilities.Modes) []analyze
 	required := capabilities.RequiredFor(modes)
 	if len(required) == 0 {
 		return []analyze.Finding{{
-			Severity: analyze.SeverityOK, Rule: "check",
+			Severity: analyze.SeverityOK, Rule: checkCommand,
 			Title: "no upstream operators required for the intended modes",
 		}}
 	}
@@ -155,20 +158,20 @@ func preFindings(rep *capabilities.Reporter, modes capabilities.Modes) []analyze
 		switch {
 		case err != nil:
 			out = append(out, analyze.Finding{
-				Severity: analyze.SeverityWarn, Rule: "check",
+				Severity: analyze.SeverityWarn, Rule: checkCommand,
 				Title:    "could not detect " + string(dep),
 				Evidence: err.Error(),
 			})
 		case !present:
 			out = append(out, analyze.Finding{
 				Severity:    analyze.SeverityFail,
-				Rule:        "check",
+				Rule:        checkCommand,
 				Title:       "required upstream operator missing: " + string(dep),
 				Remediation: "ilmctl deps install --only " + string(dep),
 			})
 		default:
 			out = append(out, analyze.Finding{
-				Severity: analyze.SeverityOK, Rule: "check",
+				Severity: analyze.SeverityOK, Rule: checkCommand,
 				Title: string(dep) + " present",
 			})
 		}

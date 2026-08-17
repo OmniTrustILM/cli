@@ -37,6 +37,9 @@ import (
 	"github.com/OmniTrustILM/cli/internal/version"
 )
 
+// versionCmdName is the version subcommand's name.
+const versionCmdName = "version"
+
 // newVersionCommand prints the client + build info. When a cluster is reachable,
 // operator/platform versions observed from the cluster are added to the output.
 func newVersionCommand(o *Options) *cobra.Command {
@@ -45,7 +48,7 @@ func newVersionCommand(o *Options) *cobra.Command {
 		output string
 	)
 	cmd := &cobra.Command{
-		Use:     "version",
+		Use:     versionCmdName,
 		Short:   "Print the ilmctl client version and build info",
 		GroupID: string(GroupOther),
 		Args:    cobra.NoArgs,

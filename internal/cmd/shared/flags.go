@@ -36,12 +36,15 @@ const (
 	instanceLabel = "app.kubernetes.io/instance"
 )
 
+// componentCore is the platform's core component name — the default logs target.
+const componentCore = "core"
+
 // PlatformLogComponents lists the platform components the operator renders as
 // Deployments, using the operator's real component names.
 // provisioning-rabbitmq only exists when provisioning.mode=deploy; the logs
 // command surfaces a clear "no pods" error otherwise.
 var PlatformLogComponents = []string{
-	"core", "auth", "auth-opa-policies", "scheduler",
+	componentCore, "auth", "auth-opa-policies", "scheduler",
 	"fe-administrator", "utils", "api-gateway", "provisioning-rabbitmq",
 }
 

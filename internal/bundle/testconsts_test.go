@@ -30,4 +30,5 @@ const (
 	bundleRedactTLSCert = "tls.crt"
 	bundleDatabaseReady = "DatabaseReady"
 	bundleRunning       = "Running"
+	bundleNamespace     = "ilm" // doubles as the fixture platform's name
 )

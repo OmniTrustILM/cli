@@ -127,9 +127,12 @@ func deleteCRDs(ctx context.Context, c *k8s.Client, o *cli.Options, keepCRDs boo
 	return deleted, nil
 }
 
+// operatorDeployment is the operator's controller-manager Deployment name.
+const operatorDeployment = "ilm-operator-controller-manager"
+
 func operatorWorkloads(ns string) []ctrlclient.Object {
 	return []ctrlclient.Object{
-		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "ilm-operator-controller-manager", Namespace: ns}},
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: operatorDeployment, Namespace: ns}},
 		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "ilm-operator-controller-manager-metrics-service", Namespace: ns}},
 	}
 }

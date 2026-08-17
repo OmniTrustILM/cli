@@ -40,13 +40,13 @@ import (
 )
 
 func TestResolveLogComponent(t *testing.T) {
-	require.NoError(t, resolveLogComponent("core"))
+	require.NoError(t, resolveLogComponent(defaultLogComponent))
 	require.NoError(t, resolveLogComponent("provisioning-rabbitmq"))
 	assert.Error(t, resolveLogComponent("nope"))
 }
 
 func TestLogsSelectorMatchesShared(t *testing.T) {
-	assert.Equal(t, shared.ComponentSelector("ilm", "core"), shared.ComponentSelector("ilm", "core"))
+	assert.Equal(t, shared.ComponentSelector(platformName, defaultLogComponent), shared.ComponentSelector(platformName, defaultLogComponent))
 }
 
 func TestResolveLogComponent_AllValid(t *testing.T) {
@@ -59,16 +59,16 @@ func TestResolveLogComponent_InvalidError(t *testing.T) {
 	err := resolveLogComponent("unknown-component")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown component")
-	assert.Contains(t, err.Error(), "core")
+	assert.Contains(t, err.Error(), defaultLogComponent)
 }
 
 // TestRunLogs_NoPods exercises the "no pods found" error path in execLogs.
 func TestRunLogs_NoPods(t *testing.T) {
 	// The platform exists but has no pods matching the component selector.
-	c := newPlatformClient(t, newPlatform("ilm", testNS))
+	c := newPlatformClient(t, newPlatform(platformName, testNS))
 	var out bytes.Buffer
 	err := execLogs(context.Background(), c, &out, shared.LogsRequest{
-		Namespace: testNS, Name: "ilm", Component: "core",
+		Namespace: testNS, Name: platformName, Component: defaultLogComponent,
 		Follow: false, Since: 0, Tail: 100,
 	})
 	require.Error(t, err)
@@ -86,7 +86,7 @@ func TestNewLogsCommand_UnknownComponent(t *testing.T) {
 // TestNewLogsCommandFromOpts_RunE_NoPods exercises the RunE path via clientFn injection.
 // The platform exists but has no pods, so execLogs returns "no pods found".
 func TestNewLogsCommandFromOpts_RunE_NoPods(t *testing.T) {
-	c := newPlatformClient(t, newPlatform("ilm", testNS))
+	c := newPlatformClient(t, newPlatform(platformName, testNS))
 	out, errOut := &bytes.Buffer{}, &bytes.Buffer{}
 	p := render.NewPrinter(out, errOut)
 	p.Color = render.ColorNever
@@ -96,7 +96,7 @@ func TestNewLogsCommandFromOpts_RunE_NoPods(t *testing.T) {
 		namespaceFn: func() (string, bool, error) { return testNS, true, nil },
 	}
 	cmd := newLogsCommandFromOpts(o, opts)
-	err := cmd.RunE(cmd, []string{"ilm"})
+	err := cmd.RunE(cmd, []string{platformName})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no pods found")
 }
@@ -104,7 +104,7 @@ func TestNewLogsCommandFromOpts_RunE_NoPods(t *testing.T) {
 // TestNewLogsCommandFromOpts_RunE_InvalidComponent verifies the --component validation
 // inside RunE rejects unknown component names.
 func TestNewLogsCommandFromOpts_RunE_InvalidComponent(t *testing.T) {
-	c := newPlatformClient(t, newPlatform("ilm", testNS))
+	c := newPlatformClient(t, newPlatform(platformName, testNS))
 	out, errOut := &bytes.Buffer{}, &bytes.Buffer{}
 	p := render.NewPrinter(out, errOut)
 	p.Color = render.ColorNever
@@ -115,7 +115,7 @@ func TestNewLogsCommandFromOpts_RunE_InvalidComponent(t *testing.T) {
 	}
 	cmd := newLogsCommandFromOpts(o, opts)
 	require.NoError(t, cmd.Flags().Set("component", "invalid-comp"))
-	err := cmd.RunE(cmd, []string{"ilm"})
+	err := cmd.RunE(cmd, []string{platformName})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid-comp")
 }
@@ -124,18 +124,18 @@ func TestNewLogsCommandFromOpts_RunE_InvalidComponent(t *testing.T) {
 // error path. A real pod exists (so PodsFor succeeds) but the fake client has no
 // REST discovery, so PodLogs returns an error before any io.Copy.
 func TestRunLogs_PodLogsFails(t *testing.T) {
-	sel := shared.ComponentSelector("ilm", "core")
+	sel := shared.ComponentSelector(platformName, defaultLogComponent)
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "ilm-core-0", Namespace: testNS,
 			Labels: sel,
 		},
 	}
-	c := newPlatformClient(t, newPlatform("ilm", testNS), pod)
+	c := newPlatformClient(t, newPlatform(platformName, testNS), pod)
 	var out bytes.Buffer
 	// since>0 and tail<0 to exercise both option branches before PodLogs is called.
 	err := execLogs(context.Background(), c, &out, shared.LogsRequest{
-		Namespace: testNS, Name: "ilm", Component: "core",
+		Namespace: testNS, Name: platformName, Component: defaultLogComponent,
 		Follow: false, Since: 5 * time.Second, Tail: -1,
 	})
 	require.Error(t, err) // fake client has no REST client for logs
@@ -143,17 +143,17 @@ func TestRunLogs_PodLogsFails(t *testing.T) {
 
 // TestRunLogs_PodLogsFailsTailSet exercises the tail>=0 option branch (default path).
 func TestRunLogs_PodLogsFailsTailSet(t *testing.T) {
-	sel := shared.ComponentSelector("ilm", "core")
+	sel := shared.ComponentSelector(platformName, defaultLogComponent)
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "ilm-core-0", Namespace: testNS,
 			Labels: sel,
 		},
 	}
-	c := newPlatformClient(t, newPlatform("ilm", testNS), pod)
+	c := newPlatformClient(t, newPlatform(platformName, testNS), pod)
 	var out bytes.Buffer
 	err := execLogs(context.Background(), c, &out, shared.LogsRequest{
-		Namespace: testNS, Name: "ilm", Component: "core",
+		Namespace: testNS, Name: platformName, Component: defaultLogComponent,
 		Follow: false, Since: 0, Tail: 50,
 	})
 	require.Error(t, err) // fake client has no REST client for logs

@@ -118,7 +118,7 @@ spec:
 	// Client dry-run must not persist anything: the object must be absent.
 	c, err := o.Factory.Client()
 	require.NoError(t, err)
-	_, getErr := c.GetPlatform(context.Background(), "ilm", "ilm-dry")
+	_, getErr := c.GetPlatform(context.Background(), platformName, "ilm-dry")
 	require.Error(t, getErr, "Platform must not exist after client dry-run")
 	assert.True(t, apierrors.IsNotFound(getErr), "expected NotFound, got: %v", getErr)
 }

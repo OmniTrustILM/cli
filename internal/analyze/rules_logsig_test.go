@@ -44,21 +44,21 @@ func TestLogsigAnalyzer(t *testing.T) {
 	t.Run("matching log line emits a finding", func(t *testing.T) {
 		t.Parallel()
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
-			Logs: map[string]string{"core": "starting...\npanic: nil pointer\n"},
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
+			Logs: map[string]string{analyzeCoreComponent: "starting...\npanic: nil pointer\n"},
 		}}}
 		got := a.Analyze(s)
 		require.Len(t, got, 1)
 		assert.Equal(t, SeverityFail, got[0].Severity)
 		assert.Equal(t, "logsig", got[0].Rule)
-		assert.Contains(t, got[0].Evidence, "core")
+		assert.Contains(t, got[0].Evidence, analyzeCoreComponent)
 	})
 
 	t.Run("no match emits nothing", func(t *testing.T) {
 		t.Parallel()
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
-			Logs: map[string]string{"core": "all good\n"},
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
+			Logs: map[string]string{analyzeCoreComponent: "all good\n"},
 		}}}
 		assert.Empty(t, a.Analyze(s))
 	})
@@ -66,7 +66,7 @@ func TestLogsigAnalyzer(t *testing.T) {
 	t.Run("no logs collected emits nothing", func(t *testing.T) {
 		t.Parallel()
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
 		}}}
 		assert.Empty(t, a.Analyze(s))
 	})

@@ -95,7 +95,7 @@ func TestFillClusterVersions(t *testing.T) {
 	s, err := k8s.NewScheme()
 	require.NoError(t, err)
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ns1"},
+		ObjectMeta: metav1.ObjectMeta{Name: cliPlatformName, Namespace: "ns1"},
 		Status:     otilmv1alpha1.PlatformStatus{ObservedVersion: cliVer2180},
 	}
 	// Assert the data path fillClusterVersions relies on (list Platforms + read
@@ -112,7 +112,7 @@ func TestFillClusterVersions_PopulatesInfo(t *testing.T) {
 	// Exercises the real applyPlatformVersions logic: mixed empty/non-empty
 	// ObservedVersions → correct OperatorVersion (first non-empty) + PlatformVersions.
 	plat1 := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ns1"},
+		ObjectMeta: metav1.ObjectMeta{Name: cliPlatformName, Namespace: "ns1"},
 		Status:     otilmv1alpha1.PlatformStatus{ObservedVersion: cliVer2180},
 	}
 	plat2 := &otilmv1alpha1.Platform{

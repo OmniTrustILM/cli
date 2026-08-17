@@ -268,7 +268,7 @@ func (c *Collector) collectConnectors(ctx context.Context, ns string, o CollectO
 		if err := c.collectSecretlessResource(ctx, conn, "config/connectors", "state/events/connector", aw, m); err != nil {
 			return err
 		}
-		if err := c.collectWorkloadLogs(ctx, o, conn.Namespace, conn.Name, "connector", aw, m); err != nil {
+		if err := c.collectWorkloadLogs(ctx, o, conn.Namespace, conn.Name, workloadKindConnector, aw, m); err != nil {
 			return err
 		}
 	}
@@ -290,18 +290,31 @@ func (c *Collector) collectProxies(ctx context.Context, ns string, o CollectOpti
 		if err := c.collectSecretlessResource(ctx, px, "config/proxies", "state/events/proxy", aw, m); err != nil {
 			return err
 		}
-		if err := c.collectWorkloadLogs(ctx, o, px.Namespace, px.Name, "proxy", aw, m); err != nil {
+		if err := c.collectWorkloadLogs(ctx, o, px.Namespace, px.Name, workloadKindProxy, aw, m); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+// Workload kinds whose pods the collector tails; the kind also serves as the
+// container-name hint for the workload's primary container.
+const (
+	workloadKindConnector = "connector"
+	workloadKindProxy     = "proxy"
+)
+
+// Operator-applied pod label keys that select a single workload's pods.
+const (
+	connectorPodLabel = "otilm.com/connector"
+	proxyPodLabel     = "otilm.com/proxy"
+)
+
 // workloadSelectorLabel maps a workload kind to the operator's unique pod label
 // key for that kind.
 var workloadSelectorLabel = map[string]string{
-	"connector": "otilm.com/connector",
-	"proxy":     "otilm.com/proxy",
+	workloadKindConnector: connectorPodLabel,
+	workloadKindProxy:     proxyPodLabel,
 }
 
 // collectWorkloadLogs streams the pod logs of a connector or proxy into
@@ -482,10 +495,13 @@ func primaryContainer(pod *corev1.Pod, comp string) string {
 	return ""
 }
 
+// componentCore is the platform's core component (and container) name.
+const componentCore = "core"
+
 // platformLogComponents is the ordered set of ILM platform component names
 // whose pods' logs the collector streams when IncludeLogs is set.
 var platformLogComponents = []string{
-	"core", "auth", "auth-opa-policies", "scheduler",
+	componentCore, "auth", "auth-opa-policies", "scheduler",
 	"fe-administrator", "utils", "api-gateway", "provisioning-rabbitmq",
 }
 

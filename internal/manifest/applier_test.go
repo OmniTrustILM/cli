@@ -51,13 +51,13 @@ func newSSAFakeClient(t *testing.T, scheme *runtime.Scheme) ctrlclient.Client {
 
 func crd(name string, established bool) *unstructured.Unstructured {
 	u := &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": "apiextensions.k8s.io/v1",
-		"kind":       "CustomResourceDefinition",
-		"metadata":   map[string]any{"name": name},
+		keyAPIVersion: "apiextensions.k8s.io/v1",
+		keyKind:       "CustomResourceDefinition",
+		keyMetadata:   map[string]any{keyName: name},
 	}}
 	if established {
 		_ = unstructured.SetNestedSlice(u.Object, []any{
-			map[string]any{"type": "Established", "status": "True"},
+			map[string]any{"type": "Established", "status": conditionTrue},
 		}, "status", "conditions")
 	}
 	return u
@@ -65,9 +65,9 @@ func crd(name string, established bool) *unstructured.Unstructured {
 
 func deployObj(name, ns string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": "apps/v1",
-		"kind":       "Deployment",
-		"metadata":   map[string]any{"name": name, "namespace": ns},
+		keyAPIVersion: "apps/v1",
+		keyKind:       kindDeployment,
+		keyMetadata:   map[string]any{keyName: name, keyNamespace: ns},
 	}}
 }
 
@@ -104,7 +104,7 @@ func TestApply_CreatesAndRecords(t *testing.T) {
 	assert.Empty(t, res.Conflicts)
 
 	var got unstructured.Unstructured
-	got.SetGroupVersionKind(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"})
+	got.SetGroupVersionKind(schema.GroupVersionKind{Group: groupApps, Version: "v1", Kind: kindDeployment})
 	require.NoError(t, c.Typed.Get(context.Background(), ctrlclient.ObjectKey{Namespace: manifestOperatorSys, Name: "mgr"}, &got))
 	assert.Equal(t, "mgr", got.GetName())
 }
@@ -119,7 +119,7 @@ func TestApply_ClientDryRunDoesNotPersist(t *testing.T) {
 	assert.Equal(t, []string{"Deployment/ilm-operator-system/mgr (dry-run)"}, res.Applied)
 
 	var got unstructured.Unstructured
-	got.SetGroupVersionKind(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"})
+	got.SetGroupVersionKind(schema.GroupVersionKind{Group: groupApps, Version: "v1", Kind: kindDeployment})
 	err = c.Typed.Get(context.Background(), ctrlclient.ObjectKey{Namespace: manifestOperatorSys, Name: "mgr"}, &got)
 	require.Error(t, err, "client dry-run must not create the object")
 }

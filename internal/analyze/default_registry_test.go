@@ -51,17 +51,17 @@ func TestDefaultRegistryEndToEnd(t *testing.T) {
 	// A snapshot that trips multiple rules at once exercises ordering + dedup.
 	s := &Snapshot{
 		OperatorVersion:   "99.0.0",
-		SupportedVersions: []string{"2.18.0"},
+		SupportedVersions: []string{analyzeVer2180},
 		Capabilities:      []capabilities.Result{{Dep: capabilities.DepCNPG, Present: false}},
 		MissingRefs:       []string{"Secret/ns/ilm-db"},
 		Platforms: []ResourceSnapshot{{
-			GVK: "Platform.otilm.com/v1alpha1", Namespace: "ns", Name: "ilm",
-			Phase:      "Degraded",
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
+			Phase:      phaseDegraded,
 			Generation: 5, ObservedGen: 4,
 			SpecModes:  capabilities.Modes{DBManaged: true},
-			Conditions: []metav1.Condition{{Type: "DatabaseReady", Status: metav1.ConditionFalse, Reason: "CNPGDown"}},
+			Conditions: []metav1.Condition{{Type: analyzeDatabaseReady, Status: metav1.ConditionFalse, Reason: "CNPGDown"}},
 			Deployments: []appsv1.Deployment{{
-				ObjectMeta: metav1.ObjectMeta{Name: "core", Namespace: "ns"},
+				ObjectMeta: metav1.ObjectMeta{Name: analyzeCoreComponent, Namespace: "ns"},
 				Spec:       appsv1.DeploymentSpec{Replicas: ptrInt32(2)},
 				Status:     appsv1.DeploymentStatus{ReadyReplicas: 0},
 			}},

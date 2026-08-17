@@ -29,9 +29,9 @@ import (
 )
 
 func TestComponentSelector(t *testing.T) {
-	sel := ComponentSelector("ilm", "core")
+	sel := ComponentSelector("ilm", componentCore)
 	assert.Equal(t, map[string]string{
-		"app.kubernetes.io/name":     "core",
+		"app.kubernetes.io/name":     componentCore,
 		"app.kubernetes.io/instance": "ilm",
 	}, sel)
 }
@@ -39,7 +39,7 @@ func TestComponentSelector(t *testing.T) {
 func TestPlatformLogComponents_RealNames(t *testing.T) {
 	// Must match the operator's real Deployment component names exactly.
 	assert.Equal(t, []string{
-		"core", "auth", "auth-opa-policies", "scheduler",
+		componentCore, "auth", "auth-opa-policies", "scheduler",
 		"fe-administrator", "utils", "api-gateway", "provisioning-rabbitmq",
 	}, PlatformLogComponents)
 }

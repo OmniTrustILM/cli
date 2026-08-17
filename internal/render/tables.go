@@ -96,9 +96,9 @@ func severityColor(s analyze.Severity) string {
 // evidence and remediation.
 func (p *Printer) PrintFindings(f []analyze.Finding) error {
 	switch p.Format() {
-	case "json":
+	case formatJSON:
 		return printFindingsJSON(p, f)
-	case "yaml":
+	case formatYAML:
 		return printFindingsYAML(p, f)
 	}
 	return printFindingsHuman(p, f)

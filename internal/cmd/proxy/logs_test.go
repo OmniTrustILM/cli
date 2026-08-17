@@ -60,9 +60,9 @@ func TestRunLogs_NoPods(t *testing.T) {
 // pods, used so the logs tests exercise the same selector a live cluster hits.
 func realProxyPodLabels(name string) map[string]string {
 	return map[string]string{
-		"otilm.com/proxy":             name,
+		proxyPodLabel:                 name,
 		"app.kubernetes.io/name":      name,
-		"app.kubernetes.io/component": "proxy",
+		"app.kubernetes.io/component": proxyKind,
 	}
 }
 

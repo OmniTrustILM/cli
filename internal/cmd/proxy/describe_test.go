@@ -68,7 +68,7 @@ func TestRunDescribe_WithConditions(t *testing.T) {
 // pod label (otilm.com/proxy=<name>), not the app.kubernetes.io labels that
 // matched nothing on a live cluster.
 func TestProxyPodSelector(t *testing.T) {
-	assert.Equal(t, map[string]string{"otilm.com/proxy": "p1"}, proxyPodSelector("p1"))
+	assert.Equal(t, map[string]string{proxyPodLabel: "p1"}, proxyPodSelector("p1"))
 }
 
 func TestRunDescribe_WithPods(t *testing.T) {
@@ -82,9 +82,9 @@ func TestRunDescribe_WithPods(t *testing.T) {
 	// Seed with the labels the operator actually applies to proxy pods.
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{Name: "p1-pod-xyz", Namespace: testNS, Labels: map[string]string{
-			"otilm.com/proxy":             "p1",
+			proxyPodLabel:                 "p1",
 			"app.kubernetes.io/name":      "p1",
-			"app.kubernetes.io/component": "proxy",
+			"app.kubernetes.io/component": proxyKind,
 		}},
 		Status: corev1.PodStatus{Phase: corev1.PodRunning},
 	}

@@ -38,6 +38,8 @@ const (
 	cmdDiagnostics = "diagnostics"
 	cmdEvents      = "events"
 	cmdGenerate    = "generate"
+	cmdGet         = "get"
+	cmdWait        = "wait"
 	cmdPlatform    = "platform"
 	cmdStatus      = "status"
 )
@@ -93,7 +95,7 @@ func TestRegister_PlatformSubcommands(t *testing.T) {
 	names := subCmds(t, cmdPlatform)
 
 	required := []string{
-		"get", cmdDescribe, cmdStatus, cmdEvents, "wait", "logs",
+		cmdGet, cmdDescribe, cmdStatus, cmdEvents, cmdWait, "logs",
 		cmdGenerate, "migrate", "apply", "edit", "delete", "upgrade", "credentials",
 	}
 	for _, want := range required {
@@ -106,7 +108,7 @@ func TestRegister_ConnectorSubcommands(t *testing.T) {
 	t.Parallel()
 	names := subCmds(t, "connector")
 
-	for _, want := range []string{"get", cmdDescribe, cmdStatus, cmdEvents, "wait", cmdGenerate} {
+	for _, want := range []string{cmdGet, cmdDescribe, cmdStatus, cmdEvents, cmdWait, cmdGenerate} {
 		assert.Truef(t, names[want], "connector must have subcommand %q", want)
 	}
 }
@@ -116,7 +118,7 @@ func TestRegister_ProxySubcommands(t *testing.T) {
 	t.Parallel()
 	names := subCmds(t, "proxy")
 
-	for _, want := range []string{"get", cmdDescribe, cmdStatus, cmdEvents, "wait", cmdGenerate} {
+	for _, want := range []string{cmdGet, cmdDescribe, cmdStatus, cmdEvents, cmdWait, cmdGenerate} {
 		assert.Truef(t, names[want], "proxy must have subcommand %q", want)
 	}
 }

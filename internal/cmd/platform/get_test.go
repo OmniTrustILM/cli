@@ -66,13 +66,13 @@ func newPlatform(name, ns string) *otilmv1alpha1.Platform {
 }
 
 func TestRunGet_ListWide(t *testing.T) {
-	c := newPlatformClient(t, newPlatform("ilm", testNS))
+	c := newPlatformClient(t, newPlatform(platformName, testNS))
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
 	require.NoError(t, runGet(context.Background(), c, p, testNS, ""))
 	s := out.String()
-	assert.Contains(t, s, "ilm")
+	assert.Contains(t, s, platformName)
 	assert.Contains(t, s, platformRunning)
 	assert.Contains(t, s, platformVer2180)
 }
@@ -85,31 +85,31 @@ func TestRunGet_SingleNotFound(t *testing.T) {
 }
 
 func TestRunStatus_ShowsPhaseAndState(t *testing.T) {
-	c := newPlatformClient(t, newPlatform("ilm", testNS))
+	c := newPlatformClient(t, newPlatform(platformName, testNS))
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runStatus(context.Background(), c, p, testNS, "ilm"))
+	require.NoError(t, runStatus(context.Background(), c, p, testNS, platformName))
 	s := out.String()
 	assert.Contains(t, s, platformRunning)
-	assert.Contains(t, s, "ilm")
+	assert.Contains(t, s, platformName)
 }
 
 func TestRunGet_JSONStructured(t *testing.T) {
-	c := newPlatformClient(t, newPlatform("ilm", testNS))
+	c := newPlatformClient(t, newPlatform(platformName, testNS))
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
 	*p.FormatPtrForTest() = fmtJSON
-	require.NoError(t, runGet(context.Background(), c, p, testNS, "ilm"))
+	require.NoError(t, runGet(context.Background(), c, p, testNS, platformName))
 	s := out.String()
-	assert.Contains(t, s, "ilm")
+	assert.Contains(t, s, platformName)
 }
 
 // TestNewGetCommandFromOpts_RunE exercises the RunE closure via clientFn injection
 // so the NewGetCommand constructor and its RunE body reach covered lines.
 func TestNewGetCommandFromOpts_RunE_ListWide(t *testing.T) {
-	c := newPlatformClient(t, newPlatform("ilm", testNS))
+	c := newPlatformClient(t, newPlatform(platformName, testNS))
 	out, errOut := &bytes.Buffer{}, &bytes.Buffer{}
 	p := render.NewPrinter(out, errOut)
 	p.Color = render.ColorNever
@@ -120,12 +120,12 @@ func TestNewGetCommandFromOpts_RunE_ListWide(t *testing.T) {
 	}
 	cmd := newGetCommandFromOpts(o, opts)
 	require.NoError(t, cmd.RunE(cmd, []string{}))
-	assert.Contains(t, out.String(), "ilm")
+	assert.Contains(t, out.String(), platformName)
 }
 
 // TestNewStatusCommandFromOpts_RunE exercises the status RunE via ClientFn injection.
 func TestNewStatusCommandFromOpts_RunE(t *testing.T) {
-	c := newPlatformClient(t, newPlatform("ilm", testNS))
+	c := newPlatformClient(t, newPlatform(platformName, testNS))
 	out, errOut := &bytes.Buffer{}, &bytes.Buffer{}
 	p := render.NewPrinter(out, errOut)
 	p.Color = render.ColorNever
@@ -135,13 +135,13 @@ func TestNewStatusCommandFromOpts_RunE(t *testing.T) {
 		NamespaceFn: func() (string, bool, error) { return testNS, true, nil },
 	}
 	cmd := newStatusCommandFromOpts(o, opts)
-	require.NoError(t, cmd.RunE(cmd, []string{"ilm"}))
+	require.NoError(t, cmd.RunE(cmd, []string{platformName}))
 	assert.Contains(t, out.String(), platformRunning)
 }
 
 // TestNewDescribeCommandFromOpts_RunE exercises the describe RunE via ClientFn injection.
 func TestNewDescribeCommandFromOpts_RunE(t *testing.T) {
-	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: testNS}}
+	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: testNS}}
 	plat.Spec.Edge = &otilmv1alpha1.EdgeSpec{Host: "ilm.example.com"}
 	plat.Status.Phase = otilmv1alpha1.PlatformPhaseRunning
 	c := newPlatformClient(t, plat)
@@ -154,13 +154,13 @@ func TestNewDescribeCommandFromOpts_RunE(t *testing.T) {
 		NamespaceFn: func() (string, bool, error) { return testNS, true, nil },
 	}
 	cmd := newDescribeCommandFromOpts(o, opts)
-	require.NoError(t, cmd.RunE(cmd, []string{"ilm"}))
+	require.NoError(t, cmd.RunE(cmd, []string{platformName}))
 	assert.Contains(t, out.String(), "ilm.example.com")
 }
 
 // TestNewEventsCommandFromOpts_RunE exercises the events RunE via ClientFn injection.
 func TestNewEventsCommandFromOpts_RunE(t *testing.T) {
-	c := newPlatformClient(t, newPlatform("ilm", testNS))
+	c := newPlatformClient(t, newPlatform(platformName, testNS))
 	out, errOut := &bytes.Buffer{}, &bytes.Buffer{}
 	p := render.NewPrinter(out, errOut)
 	p.Color = render.ColorNever
@@ -170,7 +170,7 @@ func TestNewEventsCommandFromOpts_RunE(t *testing.T) {
 		NamespaceFn: func() (string, bool, error) { return testNS, true, nil },
 	}
 	cmd := newEventsCommandFromOpts(o, opts)
-	require.NoError(t, cmd.RunE(cmd, []string{"ilm"}))
+	require.NoError(t, cmd.RunE(cmd, []string{platformName}))
 	// no events seeded → "no events" line
 	assert.Contains(t, out.String(), "no events")
 }
@@ -232,7 +232,7 @@ func TestRunGet_List_Multiple(t *testing.T) {
 
 // TestRunGet_JSONList covers the structured list path (-o json, no name arg).
 func TestRunGet_JSONList(t *testing.T) {
-	c := newPlatformClient(t, newPlatform("ilm", testNS))
+	c := newPlatformClient(t, newPlatform(platformName, testNS))
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
@@ -244,7 +244,7 @@ func TestRunGet_JSONList(t *testing.T) {
 // TestRunStatus_WithConditions covers the conditions table path.
 func TestRunStatus_WithConditions(t *testing.T) {
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: testNS},
+		ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: testNS},
 		Status: otilmv1alpha1.PlatformStatus{
 			Phase:           otilmv1alpha1.PlatformPhaseRunning,
 			ObservedVersion: platformVer2180,
@@ -257,7 +257,7 @@ func TestRunStatus_WithConditions(t *testing.T) {
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runStatus(context.Background(), c, p, testNS, "ilm"))
+	require.NoError(t, runStatus(context.Background(), c, p, testNS, platformName))
 	s := out.String()
 	assert.Contains(t, s, platformAvailable)
 	assert.Contains(t, s, "AllReady")
@@ -266,11 +266,11 @@ func TestRunStatus_WithConditions(t *testing.T) {
 
 // TestRunStatus_JSONStructured covers the -o json path of status.
 func TestRunStatus_JSONStructured(t *testing.T) {
-	c := newPlatformClient(t, newPlatform("ilm", testNS))
+	c := newPlatformClient(t, newPlatform(platformName, testNS))
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
 	*p.FormatPtrForTest() = fmtJSON
-	require.NoError(t, runStatus(context.Background(), c, p, testNS, "ilm"))
-	assert.Contains(t, out.String(), "ilm")
+	require.NoError(t, runStatus(context.Background(), c, p, testNS, platformName))
+	assert.Contains(t, out.String(), platformName)
 }

@@ -104,8 +104,8 @@ func TestColorEnabled_Auto_NoColorEnv(t *testing.T) {
 }
 
 func TestPrinter_Format(t *testing.T) {
-	p, _ := newPrinterWithFormat(t, "json")
-	assert.Equal(t, "json", p.Format())
+	p, _ := newPrinterWithFormat(t, formatJSON)
+	assert.Equal(t, formatJSON, p.Format())
 
 	pTable, _ := newPrinterWithFormat(t, "")
 	assert.Equal(t, "", pTable.Format())
@@ -117,8 +117,8 @@ func TestPrinter_Structured(t *testing.T) {
 		want   bool
 	}{
 		{"", false},
-		{"json", true},
-		{"yaml", true},
+		{formatJSON, true},
+		{formatYAML, true},
 		{"name", true},
 		{"wide", false},
 	}
@@ -131,7 +131,7 @@ func TestPrinter_Structured(t *testing.T) {
 }
 
 func TestPrinter_PrintObject_JSON(t *testing.T) {
-	p, out := newPrinterWithFormat(t, "json")
+	p, out := newPrinterWithFormat(t, formatJSON)
 	require.NoError(t, p.PrintObject(sampleConfigMap()))
 	var got map[string]any
 	require.NoError(t, json.Unmarshal(out.Bytes(), &got))
@@ -141,7 +141,7 @@ func TestPrinter_PrintObject_JSON(t *testing.T) {
 }
 
 func TestPrinter_PrintObject_YAML(t *testing.T) {
-	p, out := newPrinterWithFormat(t, "yaml")
+	p, out := newPrinterWithFormat(t, formatYAML)
 	require.NoError(t, p.PrintObject(sampleConfigMap()))
 	assert.Contains(t, out.String(), "kind: ConfigMap")
 	assert.Contains(t, out.String(), "name: demo")

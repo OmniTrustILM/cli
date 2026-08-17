@@ -47,6 +47,9 @@ type logsOpts struct {
 	namespaceFn func() (string, bool, error)
 }
 
+// defaultLogComponent is the component `platform logs` tails by default.
+const defaultLogComponent = "core"
+
 func newLogsCommand(o *cli.Options) *cobra.Command {
 	return newLogsCommandFromOpts(o, &logsOpts{})
 }
@@ -90,7 +93,7 @@ func newLogsCommandFromOpts(o *cli.Options, opts *logsOpts) *cobra.Command {
 			})
 		},
 	}
-	cmd.Flags().StringVar(&component, "component", "core", "component to tail: "+strings.Join(shared.PlatformLogComponents, ", "))
+	cmd.Flags().StringVar(&component, "component", defaultLogComponent, "component to tail: "+strings.Join(shared.PlatformLogComponents, ", "))
 	cmd.Flags().BoolVarP(&follow, "follow", "f", false, "stream logs")
 	cmd.Flags().DurationVar(&since, "since", 0, "only return logs newer than this duration")
 	cmd.Flags().Int64Var(&tail, "tail", 100, "lines of recent log to show (-1 = all)")
