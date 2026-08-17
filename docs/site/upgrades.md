@@ -1,3 +1,7 @@
+---
+sidebar_position: 5
+---
+
 # Upgrades
 
 ILM upgrades are **forward-only**. There is no downgrade and no rollback command.
