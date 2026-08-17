@@ -35,11 +35,12 @@ go mod tidy
 
 ### 2. Refresh what the change touched
 
-- `make docs` — `docs/commands/` is a **committed** generated artifact; regenerate it
-  whenever command help text changed, and commit the result.
-- Version examples in the prose docs: [`docs/quickstart.md`](docs/quickstart.md) and
-  [`docs/upgrades.md`](docs/upgrades.md) name a concrete operator release in their
-  `ilmctl init` / `ilmctl upgrade` examples.
+- `make docs` — `docs/commands/` and `docs/site/commands.md` are **committed** generated
+  artifacts. `TestCombinedIsCurrent` fails the build when `docs/site/commands.md` is stale,
+  so regenerate and commit whenever command help text changed.
+- Version examples in the prose docs: [`docs/site/quickstart.md`](docs/site/quickstart.md)
+  and [`docs/site/upgrades.md`](docs/site/upgrades.md) name a concrete operator release in
+  their `ilmctl init` / `ilmctl upgrade` examples.
 - The operator tag named in [`CLAUDE.md`](CLAUDE.md), which states the current pin.
 - `.krew.yaml` is a structural fixture (`go test ./hack/...` validates its shape). The
   krew manifest that ships is rendered by GoReleaser at tag time; the committed file is
@@ -135,3 +136,14 @@ $ ilmctl status
 Step 3 is the one that matters most: it is the only check that exercises the release
 manifests, their `checksums.txt` and the ordered apply against a real API server. Run it
 against a throwaway cluster (`kind create cluster`) before announcing anything.
+
+### Bump the documentation-site pin
+
+`docs/site/{index,quickstart,configuration,gitops,upgrades,troubleshooting,diagnostics,commands}.md`
+are synced into https://docs.otilm.com by `docusaurus-plugin-remote-content` at an
+immutable ref. In `OmniTrustILM/documentation`, set `cliDocsRef` to the tag you just
+pushed and `cliVersion` to its bare version, run
+`yarn docusaurus download-remote-cli-docs`, commit the refreshed pages under
+`docs/certificate-key/cli/`, and confirm
+`NODE_OPTIONS="--max_old_space_size=10240" yarn build` is clean. Fix any broken link in
+this repository, never on the site.

@@ -1,3 +1,7 @@
+---
+sidebar_position: 7
+---
+
 # Diagnostics
 
 ## Collecting a support bundle

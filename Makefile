@@ -69,9 +69,9 @@ run: ## Run ilmctl with ARGS, e.g. make run ARGS="version".
 	go run -ldflags "$(LDFLAGS)" ./cmd/ilmctl $(ARGS)
 
 .PHONY: docs
-docs: ## Regenerate the cobra command reference under docs/commands.
-	rm -rf docs/commands
-	go run -tags tools ./hack/gen-docs.go docs/commands
+docs: ## Regenerate the cobra command reference (per-command tree and the combined page).
+	rm -rf docs/commands docs/site/commands.md
+	go run -tags tools ./hack/gen-docs.go docs/commands docs/site/commands.md
 
 .PHONY: docker-build
 docker-build: ## Build the container image.

@@ -47,5 +47,6 @@ cmd/ilmctl/          standalone binary entry-point
 cmd/kubectl-ilm/     kubectl plugin entry-point
 internal/            non-exported packages (buildinfo, etc.)
 hack/                tooling scripts and boilerplate
-docs/                user guides + generated command reference (make docs)
+docs/                GitHub-only pages (architecture.md) + the generated per-command tree (docs/commands/)
+docs/site/           the eight site-synced user guides, incl. the generated commands.md (make docs)
 ```
