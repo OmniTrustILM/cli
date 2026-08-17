@@ -1,3 +1,7 @@
+---
+sidebar_position: 4
+---
+
 # GitOps
 
 The CLI is a client, never a second control plane. Mutations flow through the
@@ -57,6 +61,6 @@ $ ilmctl proxy generate \
 ```
 
 Both commands support `--apply` and `--dry-run=server`. Note that a generated
-`Connector` CR registers against a **running ILM Core platform instance**; until
+`Connector` CR registers against a **running platform instance**; until
 that platform is reachable the registration status will remain
 `waitingForApproval`.

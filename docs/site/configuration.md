@@ -1,3 +1,7 @@
+---
+sidebar_position: 3
+---
+
 # Configuration
 
 ## Cluster selection (kubeconfig)
@@ -20,10 +24,10 @@ There is no client-side "role" or stored credential. Authorization is enforced
 server-side by Kubernetes RBAC against the identity in the selected kubeconfig
 context.
 
-## ilmctl context file (reserved for Phase 2)
+## Context file
 
-The ilmctl context file selects a future **ILM Core instance** (not a cluster).
-It is resolved:
+The ilmctl context file selects a future **Core instance** (not a cluster). It is
+resolved:
 
 | Precedence | Source |
 |---|---|
@@ -31,8 +35,11 @@ It is resolved:
 | 2 | `$ILMCONFIG` (colon-separated merged list) |
 | 3 | `$XDG_CONFIG_HOME/ilm/config` (i.e. `~/.config/ilm/config`) |
 
-In Phase 1 this file is read but never written. It holds no secrets and no cluster
-data. The format is defined now so it does not churn when the Core layer arrives.
+:::note[Not yet available]
+The context file is not yet implemented: no current command reads or writes it. It
+holds no secrets or cluster data, and its resolution order and format are defined
+now only so they will not need to change once the Core layer arrives.
+:::
 
 ## Output formats
 
@@ -40,17 +47,17 @@ data. The format is defined now so it does not churn when the Core layer arrives
 Without `-o`, commands print purpose-built human tables. Machine-readable detail
 (including `check`/`diagnostics analyze` findings) is always available via `-o json`.
 
-## Colour
+## Color
 
-Colour is emitted only when stdout is a TTY. The following controls are honoured
+Color is emitted only when stdout is a TTY. The following controls are honored
 (highest precedence wins):
 
 | Override | Effect |
 |---|---|
-| `--color` | Force colour on |
-| `--no-color` | Force colour off |
-| `NO_COLOR=<any>` env | Force colour off |
-| Not a TTY | Colour off (default) |
+| `--color` | Force color on |
+| `--no-color` | Force color off |
+| `NO_COLOR=<any>` env | Force color off |
+| Not a TTY | Color off (default) |
 
 There are no interactive prompts when stdout is not a TTY. Use `-y/--yes` to
 confirm destructive actions in scripts.

@@ -1,3 +1,7 @@
+---
+sidebar_position: 6
+---
+
 # Troubleshooting
 
 ## Triage order
@@ -34,7 +38,7 @@ any finding has `fail` severity.
 | `secretRef` / `issuerRef` to absent object | Misnamed Secret or Issuer reference in the Platform spec | Create the Secret or Issuer, or correct the reference in the Platform spec |
 | Platform stuck in `Progressing` | Reconcile blocked or operator unhealthy | `ilmctl platform events ilm`, then `ilmctl platform logs --component core` |
 | `observedGeneration < generation` | Operator has not yet observed the latest spec change | Verify the operator Deployment is `Running` and has no restart loops |
-| Connector `waitingForApproval` | ILM Core platform not yet reachable | Ensure the Platform is `Running` and the connector's `--platform-url` is correct |
+| Connector `waitingForApproval` | Platform not yet reachable | Ensure the Platform is `Running` and the connector's `--platform-url` is correct |
 
 ## Component log targets
 
@@ -49,4 +53,4 @@ any finding has `fail` severity.
 $ ilmctl check -o json | jq '.[] | select(.severity == "fail")'
 ```
 
-For a full offline bundle to hand to support, see [Diagnostics](diagnostics.md).
+For a full offline bundle to hand to support, see [Diagnostics](./diagnostics.md).
