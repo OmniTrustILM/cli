@@ -47,11 +47,11 @@ func newPlatformWithPolicy(name, ns string, policy otilmv1alpha1.PlatformDeletio
 }
 
 func TestDelete_ReportsDeletionPolicy_Delete(t *testing.T) {
-	p := newPlatformWithPolicy("ilm", "ilm", otilmv1alpha1.PlatformDeletionPolicyDelete)
+	p := newPlatformWithPolicy(platformName, platformName, otilmv1alpha1.PlatformDeletionPolicyDelete)
 	o, out := newFakeOptions(t, p)
 
 	cmd := NewDeleteCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "-y"})
+	cmd.SetArgs([]string{platformName, "-n", platformName, "-y"})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -64,10 +64,10 @@ func TestDelete_ReportsDeletionPolicy_Delete(t *testing.T) {
 }
 
 func TestDelete_ReportsDeletionPolicy_Retain(t *testing.T) {
-	p := newPlatformWithPolicy("ilm", "ilm", otilmv1alpha1.PlatformDeletionPolicyRetain)
+	p := newPlatformWithPolicy(platformName, platformName, otilmv1alpha1.PlatformDeletionPolicyRetain)
 	o, out := newFakeOptions(t, p)
 	cmd := NewDeleteCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "-y"})
+	cmd.SetArgs([]string{platformName, "-n", platformName, "-y"})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -78,7 +78,7 @@ func TestDelete_ReportsDeletionPolicy_Retain(t *testing.T) {
 func TestDelete_NotFound(t *testing.T) {
 	o, out := newFakeOptions(t)
 	cmd := NewDeleteCommand(o)
-	cmd.SetArgs([]string{"missing", "-n", "ilm", "-y"})
+	cmd.SetArgs([]string{"missing", "-n", platformName, "-y"})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -95,21 +95,21 @@ func TestDelete_RequiresName(t *testing.T) {
 }
 
 func TestDelete_NonTTY_RefusesWithoutYes(t *testing.T) {
-	p := newPlatformWithPolicy("ilm", "ilm", otilmv1alpha1.PlatformDeletionPolicyRetain)
+	p := newPlatformWithPolicy(platformName, platformName, otilmv1alpha1.PlatformDeletionPolicyRetain)
 	o, out := newFakeOptions(t, p)
 	c, err := o.Factory.Client()
 	require.NoError(t, err)
 	// o.In is already a bytes.Buffer (not a TTY) — no -y flag
 	cmd := NewDeleteCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm"})
+	cmd.SetArgs([]string{platformName, "-n", platformName})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	assert.Error(t, cmd.Execute())
 	// Nothing must have been deleted: the Platform must still exist.
-	got, getErr := c.GetPlatform(context.Background(), "ilm", "ilm")
+	got, getErr := c.GetPlatform(context.Background(), platformName, platformName)
 	require.NoError(t, getErr, "Platform must still exist after refused delete")
-	assert.Equal(t, "ilm", got.Name)
+	assert.Equal(t, platformName, got.Name)
 }
 
 func TestDelete_WaitReturnsWhenGone(t *testing.T) {
@@ -118,7 +118,7 @@ func TestDelete_WaitReturnsWhenGone(t *testing.T) {
 	o, out := newFakeOptions(t)
 	// No platform seeded — it won't be found
 	cmd := NewDeleteCommand(o)
-	cmd.SetArgs([]string{"absent", "-n", "ilm", "-y"})
+	cmd.SetArgs([]string{"absent", "-n", platformName, "-y"})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -130,10 +130,10 @@ func TestDelete_WaitPrintsDeletedAfterGone(t *testing.T) {
 	// --wait: after the fake client's Delete removes the object immediately,
 	// waitPlatformGone sees NotFound on the first poll and returns nil.
 	// The platformDeleted confirmation must appear ONLY in that success path.
-	p := newPlatformWithPolicy("ilm", "ilm", otilmv1alpha1.PlatformDeletionPolicyRetain)
+	p := newPlatformWithPolicy(platformName, platformName, otilmv1alpha1.PlatformDeletionPolicyRetain)
 	o, out := newFakeOptions(t, p)
 	cmd := NewDeleteCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "-y", "--wait"})
+	cmd.SetArgs([]string{platformName, "-n", platformName, "-y", "--wait"})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -148,7 +148,7 @@ func TestWaitPlatformGone_ImmediatelyGone(t *testing.T) {
 	scheme, err := k8s.NewScheme()
 	require.NoError(t, err)
 	fc := fake.NewClientBuilder().WithScheme(scheme).Build()
-	err = waitPlatformGone(context.Background(), fc, "ilm", "gone")
+	err = waitPlatformGone(context.Background(), fc, platformName, "gone")
 	require.NoError(t, err)
 }
 

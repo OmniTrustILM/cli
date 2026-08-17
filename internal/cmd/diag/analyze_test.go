@@ -200,17 +200,17 @@ func renderF(buf *bytes.Buffer, format string, findings []analyze.Finding) error
 // Summary (what was collected + the reconstructed overview) before the findings.
 func TestRenderReport_MarkdownSummary(t *testing.T) {
 	snap := &analyze.Snapshot{
-		OperatorVersion: "2.18.0",
+		OperatorVersion: diagVer2180,
 		OperatorReady:   true,
 		Platforms: []analyze.ResourceSnapshot{{
-			Namespace: "ilm", Name: "ilm", Phase: "Running", ObservedVersion: "2.18.0",
+			Namespace: diagPlatformName, Name: diagPlatformName, Phase: "Running", ObservedVersion: diagVer2180,
 			Conditions: []metav1.Condition{
 				{Type: "Available", Status: metav1.ConditionTrue},
 				{Type: "Progressing", Status: metav1.ConditionFalse},
 			},
 			Logs: map[string]string{"core": "…", "auth": "…"},
 		}},
-		Connectors: []analyze.ResourceSnapshot{{Namespace: "ilm", Name: "common-credential-provider"}},
+		Connectors: []analyze.ResourceSnapshot{{Namespace: diagPlatformName, Name: "common-credential-provider"}},
 	}
 	m := bundle.Manifest{
 		SchemaVersion: "1", ClientVersion: "abc123", Redacted: true,

@@ -50,7 +50,7 @@ func TestReconcileAnalyzer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			s := &Snapshot{Connectors: []ResourceSnapshot{{
-				GVK: "Connector.otilm.com/v1alpha1", Namespace: "ns", Name: "c",
+				GVK: GVKConnector, Namespace: "ns", Name: "c",
 				Generation: tt.gen, ObservedGen: tt.observed,
 			}}}
 			got := a.Analyze(s)

@@ -51,7 +51,7 @@ func TestEventAnalyzer(t *testing.T) {
 	t.Run("recent warning is a warn finding", func(t *testing.T) {
 		t.Parallel()
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
 			Events: []corev1.Event{warnEvent("FailedScheduling", "no nodes available", base.Add(-5*time.Minute), 3)},
 		}}}
 		got := a.Analyze(s)
@@ -64,7 +64,7 @@ func TestEventAnalyzer(t *testing.T) {
 	t.Run("stale warning outside window is ignored", func(t *testing.T) {
 		t.Parallel()
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
 			Events: []corev1.Event{warnEvent("FailedMount", "x", base.Add(-3*time.Hour), 1)},
 		}}}
 		assert.Empty(t, a.Analyze(s))
@@ -74,7 +74,7 @@ func TestEventAnalyzer(t *testing.T) {
 		t.Parallel()
 		ev := corev1.Event{Type: corev1.EventTypeNormal, Reason: "Pulled", LastTimestamp: metav1.NewTime(base)}
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
 			Events: []corev1.Event{ev},
 		}}}
 		assert.Empty(t, a.Analyze(s))

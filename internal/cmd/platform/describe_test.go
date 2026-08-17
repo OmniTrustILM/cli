@@ -39,10 +39,10 @@ import (
 )
 
 func TestRunDescribe_ResolvedEndpointsAndMQ(t *testing.T) {
-	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: testNS}}
+	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: testNS}}
 	plat.Spec.Edge = &otilmv1alpha1.EdgeSpec{Enabled: true, Host: platformILMDomain}
 	plat.Spec.Messaging.Mode = modeManaged
-	plat.Spec.Messaging.BrokerType = "rabbitmq"
+	plat.Spec.Messaging.BrokerType = brokerRabbitMQ
 	plat.Spec.Messaging.Management.Expose = true
 	plat.Spec.Keycloak = &otilmv1alpha1.KeycloakSpec{Mode: modeManaged}
 	plat.Status.Phase = otilmv1alpha1.PlatformPhaseRunning
@@ -52,7 +52,7 @@ func TestRunDescribe_ResolvedEndpointsAndMQ(t *testing.T) {
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runDescribe(context.Background(), c, p, testNS, "ilm"))
+	require.NoError(t, runDescribe(context.Background(), c, p, testNS, platformName))
 	s := out.String()
 	assert.Contains(t, s, "https://ilm.example.com")
 	assert.Contains(t, s, "https://ilm.example.com/mq") // managed RabbitMQ management UI
@@ -64,55 +64,55 @@ func TestRunDescribe_ResolvedEndpointsAndMQ(t *testing.T) {
 // TestRunDescribe_KeycloakNoneWhenAbsent verifies the header shows mode=none when
 // spec.keycloak is nil (no Keycloak configured), consistent with Database/Messaging.
 func TestRunDescribe_KeycloakNoneWhenAbsent(t *testing.T) {
-	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: testNS}}
+	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: testNS}}
 	// no spec.keycloak set
 	c := newPlatformClient(t, plat)
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runDescribe(context.Background(), c, p, testNS, "ilm"))
+	require.NoError(t, runDescribe(context.Background(), c, p, testNS, platformName))
 	assert.Contains(t, out.String(), "Keycloak:  mode=none")
 }
 
 func TestRunDescribe_ExternalMessagingNoMQ(t *testing.T) {
-	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: testNS}}
+	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: testNS}}
 	plat.Spec.Edge = &otilmv1alpha1.EdgeSpec{Enabled: true, Host: platformILMDomain}
-	plat.Spec.Messaging.Mode = "external" // no /mq route for an external broker
+	plat.Spec.Messaging.Mode = modeExternal // no /mq route for an external broker
 	c := newPlatformClient(t, plat)
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runDescribe(context.Background(), c, p, testNS, "ilm"))
+	require.NoError(t, runDescribe(context.Background(), c, p, testNS, platformName))
 	assert.NotContains(t, out.String(), "/mq")
 }
 
 func TestRunDescribe_CommonHostNameFallback(t *testing.T) {
-	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: testNS}}
+	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: testNS}}
 	plat.Spec.Common.HostName = "fallback.example.com"
 	// no edge block set → should fall back to spec.common.hostName
 	c := newPlatformClient(t, plat)
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runDescribe(context.Background(), c, p, testNS, "ilm"))
+	require.NoError(t, runDescribe(context.Background(), c, p, testNS, platformName))
 	assert.Contains(t, out.String(), "https://fallback.example.com")
 }
 
 func TestRunDescribe_NoHostConfigured(t *testing.T) {
-	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: testNS}}
+	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: testNS}}
 	c := newPlatformClient(t, plat)
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runDescribe(context.Background(), c, p, testNS, "ilm"))
+	require.NoError(t, runDescribe(context.Background(), c, p, testNS, platformName))
 	assert.Contains(t, out.String(), "<no public host configured>")
 }
 
 func TestResolveEndpoints_ManagedNotExposed(t *testing.T) {
-	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: testNS}}
+	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: testNS}}
 	plat.Spec.Edge = &otilmv1alpha1.EdgeSpec{Enabled: true, Host: platformILMDomain}
 	plat.Spec.Messaging.Mode = modeManaged
-	plat.Spec.Messaging.BrokerType = "rabbitmq"
+	plat.Spec.Messaging.BrokerType = brokerRabbitMQ
 	plat.Spec.Messaging.Management.Expose = false // management not exposed
 
 	eps := resolveEndpoints(plat)
@@ -123,23 +123,23 @@ func TestResolveEndpoints_ManagedNotExposed(t *testing.T) {
 
 // TestRunDescribe_JSONStructured covers the -o json path of describe.
 func TestRunDescribe_JSONStructured(t *testing.T) {
-	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: testNS}}
+	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: testNS}}
 	plat.Spec.Edge = &otilmv1alpha1.EdgeSpec{Host: platformILMDomain}
 	c := newPlatformClient(t, plat)
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
 	*p.FormatPtrForTest() = fmtJSON
-	require.NoError(t, runDescribe(context.Background(), c, p, testNS, "ilm"))
-	assert.Contains(t, out.String(), "ilm")
+	require.NoError(t, runDescribe(context.Background(), c, p, testNS, platformName))
+	assert.Contains(t, out.String(), platformName)
 }
 
 // TestRunEvents_WithEvents covers the events table rendering path.
 func TestRunEvents_WithEvents(t *testing.T) {
-	plat := newPlatform("ilm", testNS)
+	plat := newPlatform(platformName, testNS)
 	ev := &corev1.Event{
 		ObjectMeta:     metav1.ObjectMeta{Name: "ev1", Namespace: testNS},
-		InvolvedObject: corev1.ObjectReference{Kind: "Platform", Name: "ilm"},
+		InvolvedObject: corev1.ObjectReference{Kind: "Platform", Name: platformName},
 		Type:           "Warning",
 		Reason:         "Degraded",
 		Message:        "something went wrong",
@@ -148,7 +148,7 @@ func TestRunEvents_WithEvents(t *testing.T) {
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runEvents(context.Background(), c, p, testNS, "ilm"))
+	require.NoError(t, runEvents(context.Background(), c, p, testNS, platformName))
 	s := out.String()
 	assert.Contains(t, s, "Warning")
 	assert.Contains(t, s, "Degraded")
@@ -157,7 +157,7 @@ func TestRunEvents_WithEvents(t *testing.T) {
 
 // TestRunDescribe_WithChildDeployments covers the child-deployments section.
 func TestRunDescribe_WithChildDeployments(t *testing.T) {
-	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: testNS}}
+	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: testNS}}
 	plat.Spec.Edge = &otilmv1alpha1.EdgeSpec{Host: platformILMDomain}
 	plat.Status.Phase = otilmv1alpha1.PlatformPhaseRunning
 
@@ -166,7 +166,7 @@ func TestRunDescribe_WithChildDeployments(t *testing.T) {
 			Name: "ilm-core", Namespace: testNS,
 			Labels: map[string]string{
 				"app.kubernetes.io/managed-by": "ilm-operator",
-				"otilm.com/platform":           "ilm",
+				"otilm.com/platform":           platformName,
 			},
 		},
 		Status: appsv1.DeploymentStatus{
@@ -177,7 +177,7 @@ func TestRunDescribe_WithChildDeployments(t *testing.T) {
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runDescribe(context.Background(), c, p, testNS, "ilm"))
+	require.NoError(t, runDescribe(context.Background(), c, p, testNS, platformName))
 	s := out.String()
 	assert.Contains(t, s, "ilm-core")
 	assert.Contains(t, s, "1/1")
@@ -185,10 +185,10 @@ func TestRunDescribe_WithChildDeployments(t *testing.T) {
 
 // TestRunDescribe_WithEvents covers the events section in describe.
 func TestRunDescribe_WithEvents(t *testing.T) {
-	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: testNS}}
+	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: testNS}}
 	ev := &corev1.Event{
 		ObjectMeta:     metav1.ObjectMeta{Name: "ev1", Namespace: testNS},
-		InvolvedObject: corev1.ObjectReference{Kind: "Platform", Name: "ilm"},
+		InvolvedObject: corev1.ObjectReference{Kind: "Platform", Name: platformName},
 		Type:           "Normal",
 		Reason:         "Created",
 		Message:        "platform created",
@@ -197,7 +197,7 @@ func TestRunDescribe_WithEvents(t *testing.T) {
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runDescribe(context.Background(), c, p, testNS, "ilm"))
+	require.NoError(t, runDescribe(context.Background(), c, p, testNS, platformName))
 	s := out.String()
 	assert.Contains(t, s, "platform created")
 }

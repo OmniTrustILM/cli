@@ -211,7 +211,7 @@ func connectorSnapshot(body []byte, entries map[string][]byte) (analyze.Resource
 		string(c.Status.Phase), c.Generation, c.Status.ObservedGeneration,
 		c.Status.Conditions)
 	rs.Events = eventsFor(entries, "connector_", c.Namespace, c.Name)
-	rs.Logs = workloadLogsFor(entries, "connector", c.Namespace, c.Name)
+	rs.Logs = workloadLogsFor(entries, workloadKindConnector, c.Namespace, c.Name)
 	return rs, nil
 }
 
@@ -227,7 +227,7 @@ func proxySnapshot(body []byte, entries map[string][]byte) (analyze.ResourceSnap
 	rs.ObservedVersion = x.Status.ObservedVersion
 	rs.SecretRefs = analyze.ProxyRefs(&x)
 	rs.Events = eventsFor(entries, "proxy_", x.Namespace, x.Name)
-	rs.Logs = workloadLogsFor(entries, "proxy", x.Namespace, x.Name)
+	rs.Logs = workloadLogsFor(entries, workloadKindProxy, x.Namespace, x.Name)
 	return rs, nil
 }
 

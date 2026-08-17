@@ -58,13 +58,13 @@ func fakeOptions(t *testing.T, plat *otilmv1alpha1.Platform) *cli.Options {
 func runningPlatform() *otilmv1alpha1.Platform {
 	return &otilmv1alpha1.Platform{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "ilm", Namespace: "default", Generation: 1,
+			Name: diagPlatformName, Namespace: "default", Generation: 1,
 		},
-		Spec: otilmv1alpha1.PlatformSpec{Version: "2.18.0"},
+		Spec: otilmv1alpha1.PlatformSpec{Version: diagVer2180},
 		Status: otilmv1alpha1.PlatformStatus{
 			Phase:              otilmv1alpha1.PlatformPhaseRunning,
 			ObservedGeneration: 1,
-			ObservedVersion:    "2.18.0",
+			ObservedVersion:    diagVer2180,
 			Conditions: []metav1.Condition{
 				{Type: "Available", Status: metav1.ConditionTrue, Reason: "AllComponentsReady"},
 			},

@@ -46,6 +46,10 @@ func newPhaseAnalyzer() phaseAnalyzer {
 
 func (phaseAnalyzer) Name() string { return "phase" }
 
+// phaseDegraded is the Degraded status PHASE. The Degraded condition type shares
+// the string but is a separate API surface with its own constant (condDegraded).
+const phaseDegraded = "Degraded"
+
 func (a phaseAnalyzer) Analyze(s *Snapshot) []Finding {
 	now := a.now
 	if now == nil {
@@ -59,7 +63,7 @@ func (a phaseAnalyzer) Analyze(s *Snapshot) []Finding {
 	var out []Finding
 	for _, r := range s.Resources() {
 		switch r.Phase {
-		case "Degraded":
+		case phaseDegraded:
 			out = append(out, Finding{
 				Severity: SeverityFail,
 				Rule:     a.Name(),

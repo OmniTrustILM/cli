@@ -46,7 +46,7 @@ func clientWithOperatorObjects(t *testing.T) *k8s.Client {
 	require.NoError(t, apiextv1.AddToScheme(scheme))
 
 	dep := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{
-		Name: "ilm-operator-controller-manager", Namespace: "ilm-operator-system",
+		Name: operatorDeployment, Namespace: "ilm-operator-system",
 	}}
 	crd := &apiextv1.CustomResourceDefinition{ObjectMeta: metav1.ObjectMeta{Name: infraPlatformsCRD}}
 	typed := ctrlfake.NewClientBuilder().WithScheme(scheme).WithObjects(dep, crd).Build()
@@ -84,7 +84,7 @@ func TestUninstall_KeepsCRDsByDefault(t *testing.T) {
 	// Controller deployment gone, CRD retained.
 	var dep appsv1.Deployment
 	err := c.Typed.Get(context.Background(),
-		ctrlclient.ObjectKey{Namespace: "ilm-operator-system", Name: "ilm-operator-controller-manager"}, &dep)
+		ctrlclient.ObjectKey{Namespace: "ilm-operator-system", Name: operatorDeployment}, &dep)
 	require.Error(t, err)
 
 	var crd apiextv1.CustomResourceDefinition

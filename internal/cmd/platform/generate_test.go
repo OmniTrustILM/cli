@@ -48,7 +48,7 @@ func newTestOptions(in []byte) (*cli.Options, *bytes.Buffer, *bytes.Buffer) {
 func TestGenerate_DefaultProfileEmitsYAML(t *testing.T) {
 	o, out, _ := newTestOptions(nil)
 	cmd := NewGenerateCommand(o)
-	cmd.SetArgs([]string{platformFlagName, "ilm", "--namespace", "ilm", platformFlagProf, platformExternal})
+	cmd.SetArgs([]string{platformFlagName, platformName, platformFlagNS, platformName, platformFlagProf, platformExternal})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	require.NoError(t, cmd.Execute())
@@ -63,7 +63,7 @@ func TestGenerate_DefaultProfileEmitsYAML(t *testing.T) {
 func TestGenerate_FlagOverridesEchoed(t *testing.T) {
 	o, out, _ := newTestOptions(nil)
 	cmd := NewGenerateCommand(o)
-	cmd.SetArgs([]string{platformFlagName, "ilm", platformFlagProf, "managed-ha", "--db-mode", platformExternal})
+	cmd.SetArgs([]string{platformFlagName, platformName, platformFlagProf, "managed-ha", "--db-mode", platformExternal})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	require.NoError(t, cmd.Execute())
@@ -76,7 +76,7 @@ func TestGenerate_FlagOverridesEchoed(t *testing.T) {
 func TestGenerate_KeycloakNoneOmitsBlock(t *testing.T) {
 	o, out, _ := newTestOptions(nil)
 	cmd := NewGenerateCommand(o)
-	cmd.SetArgs([]string{platformFlagName, "ilm", platformFlagProf, platformExternal, "--keycloak-mode", "none"})
+	cmd.SetArgs([]string{platformFlagName, platformName, platformFlagProf, platformExternal, "--keycloak-mode", "none"})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	require.NoError(t, cmd.Execute())
@@ -86,7 +86,7 @@ func TestGenerate_KeycloakNoneOmitsBlock(t *testing.T) {
 func TestGenerate_InvalidFlagIsError(t *testing.T) {
 	o, out, _ := newTestOptions(nil)
 	cmd := NewGenerateCommand(o)
-	cmd.SetArgs([]string{platformFlagName, "ilm", "--db-mode", "bogus"})
+	cmd.SetArgs([]string{platformFlagName, platformName, "--db-mode", "bogus"})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	assert.Error(t, cmd.Execute())
@@ -109,7 +109,7 @@ func TestGenerate_Apply_DryRunServer(t *testing.T) {
 
 	o, out, _ := newTestOptions(nil)
 	cmd := NewGenerateCommand(o)
-	cmd.SetArgs([]string{platformFlagName, "ilm", "--namespace", "ilm", platformFlagProf, platformExternal, "--apply", "--dry-run=server"})
+	cmd.SetArgs([]string{platformFlagName, platformName, platformFlagNS, platformName, platformFlagProf, platformExternal, "--apply", "--dry-run=server"})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	// The fake client does not run CEL webhooks, so the apply should succeed.
@@ -128,7 +128,7 @@ func TestGenerate_NoApply_NoClusterContact(t *testing.T) {
 
 	o, out, _ := newTestOptions(nil)
 	cmd := NewGenerateCommand(o)
-	cmd.SetArgs([]string{platformFlagName, "ilm", platformFlagProf, platformExternal})
+	cmd.SetArgs([]string{platformFlagName, platformName, platformFlagProf, platformExternal})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	require.NoError(t, cmd.Execute())

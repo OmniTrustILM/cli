@@ -37,8 +37,11 @@ type ConnectorOptions struct {
 	Replicas                                               *int32
 }
 
+// authTypeNone disables registration auth; it is also the generator's default.
+const authTypeNone = "none"
+
 var validAuthTypes = map[string]bool{
-	"none": true, "basic": true, "certificate": true, "apiKey": true, "jwt": true,
+	authTypeNone: true, "basic": true, "certificate": true, "apiKey": true, "jwt": true,
 }
 
 // imageRef holds the parsed components of a container image reference.
@@ -140,7 +143,7 @@ func ScaffoldConnector(o ConnectorOptions) (*otilmv1alpha1.Connector, []Effectiv
 	}
 	authType := o.AuthType
 	if authType == "" {
-		authType = "none"
+		authType = authTypeNone
 	}
 	if !validAuthTypes[authType] {
 		return nil, nil, fmt.Errorf("invalid auth-type %q (want none|basic|certificate|apiKey|jwt)", authType)
@@ -151,7 +154,7 @@ func ScaffoldConnector(o ConnectorOptions) (*otilmv1alpha1.Connector, []Effectiv
 		{Field: "image.tag", Value: img.tag, Source: sourceFlag},
 	}
 	if img.digest != "" {
-		notes = append(notes, EffectiveNote{Field: "image.digest", Value: img.digest, Source: sourceFlag})
+		notes = append(notes, EffectiveNote{Field: fieldImageDigest, Value: img.digest, Source: sourceFlag})
 	}
 
 	c := &otilmv1alpha1.Connector{

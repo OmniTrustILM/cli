@@ -87,23 +87,23 @@ func seedFor(p Profile) (profileSeed, bool) {
 	switch p {
 	case ProfileMinimal:
 		return profileSeed{
-			dbMode: "external", msgMode: "external", brokerType: "rabbitmq",
-			keycloakMode: "none", provisioningMode: "external",
-			edge: "ingress", tlsSource: "internal", deletionPolicy: "Retain",
+			dbMode: modeExternal, msgMode: modeExternal, brokerType: brokerRabbitMQ,
+			keycloakMode: modeNone, provisioningMode: modeExternal,
+			edge: edgeIngress, tlsSource: tlsInternal, deletionPolicy: policyRetain,
 			ha: false,
 		}, true
 	case ProfileExternal:
 		return profileSeed{
-			dbMode: "external", msgMode: "external", brokerType: "rabbitmq",
-			keycloakMode: "external", provisioningMode: "external",
-			edge: "ingress", tlsSource: "internal", deletionPolicy: "Retain",
+			dbMode: modeExternal, msgMode: modeExternal, brokerType: brokerRabbitMQ,
+			keycloakMode: modeExternal, provisioningMode: modeExternal,
+			edge: edgeIngress, tlsSource: tlsInternal, deletionPolicy: policyRetain,
 			ha: false,
 		}, true
 	case ProfileManagedHA:
 		return profileSeed{
-			dbMode: "managed", msgMode: "managed", brokerType: "rabbitmq",
-			keycloakMode: "managed", provisioningMode: "deploy",
-			edge: "ingress", tlsSource: "internal", deletionPolicy: "Retain",
+			dbMode: modeManaged, msgMode: modeManaged, brokerType: brokerRabbitMQ,
+			keycloakMode: modeManaged, provisioningMode: modeDeploy,
+			edge: edgeIngress, tlsSource: tlsInternal, deletionPolicy: policyRetain,
 			ha: true,
 		}, true
 	default:
@@ -119,15 +119,37 @@ const (
 	sourcePlaceholder = "placeholder"
 )
 
+// Spec vocabulary shared by the profile seeds, validators and note fields.
+const (
+	modeExternal = "external"
+	modeManaged  = "managed"
+	modeNone     = "none"
+	modeDeploy   = "deploy"
+
+	brokerRabbitMQ = "rabbitmq"
+	edgeIngress    = "ingress"
+	tlsInternal    = "internal"
+
+	policyRetain = "Retain"
+	tlsIssuerRef = "issuerRef"
+	tlsSecret    = "secret"
+
+	flagDBMode = "db-mode"
+	flagEdge   = "edge"
+
+	fieldHostName    = "common.hostName"
+	fieldImageDigest = "image.digest"
+)
+
 var (
-	validDBModes       = map[string]bool{"external": true, "managed": true}
-	validMsgModes      = map[string]bool{"external": true, "managed": true}
-	validBrokerTypes   = map[string]bool{"rabbitmq": true, "servicebus": true}
-	validKeycloakModes = map[string]bool{"none": true, "external": true, "managed": true}
-	validProvModes     = map[string]bool{"external": true, "deploy": true}
-	validEdges         = map[string]bool{"ingress": true, "gatewayAPI": true}
-	validTLSSources    = map[string]bool{"internal": true, "letsEncrypt": true, "issuerRef": true, "secret": true}
-	validDeletionPols  = map[string]bool{"Retain": true, "Delete": true}
+	validDBModes       = map[string]bool{modeExternal: true, modeManaged: true}
+	validMsgModes      = map[string]bool{modeExternal: true, modeManaged: true}
+	validBrokerTypes   = map[string]bool{brokerRabbitMQ: true, "servicebus": true}
+	validKeycloakModes = map[string]bool{modeNone: true, modeExternal: true, modeManaged: true}
+	validProvModes     = map[string]bool{modeExternal: true, modeDeploy: true}
+	validEdges         = map[string]bool{edgeIngress: true, "gatewayAPI": true}
+	validTLSSources    = map[string]bool{tlsInternal: true, "letsEncrypt": true, tlsIssuerRef: true, tlsSecret: true}
+	validDeletionPols  = map[string]bool{policyRetain: true, "Delete": true}
 )
 
 // noteResolver folds a profile seed and an optional flag override into the
@@ -169,7 +191,7 @@ type resolvedFields struct {
 func resolveEnumFields(r *noteResolver, o PlatformOptions, seed profileSeed) (resolvedFields, error) {
 	f := resolvedFields{}
 
-	f.dbMode = r.pick("database.mode", "db-mode", o.DBMode, seed.dbMode)
+	f.dbMode = r.pick("database.mode", flagDBMode, o.DBMode, seed.dbMode)
 	if !validDBModes[f.dbMode] {
 		return f, fmt.Errorf("invalid db-mode %q (want external|managed)", f.dbMode)
 	}
@@ -193,11 +215,11 @@ func resolveEnumFields(r *noteResolver, o PlatformOptions, seed profileSeed) (re
 	if !validProvModes[f.provMode] {
 		return f, fmt.Errorf("invalid provisioning-mode %q (want external|deploy)", f.provMode)
 	}
-	if f.provMode == "deploy" && f.brokerType != "rabbitmq" {
+	if f.provMode == modeDeploy && f.brokerType != brokerRabbitMQ {
 		return f, fmt.Errorf("provisioning mode=deploy requires broker-type=rabbitmq (got %q)", f.brokerType)
 	}
 
-	f.edge = r.pick("edge.type", "edge", o.Edge, seed.edge)
+	f.edge = r.pick("edge.type", flagEdge, o.Edge, seed.edge)
 	if !validEdges[f.edge] {
 		return f, fmt.Errorf("invalid edge %q (want ingress|gatewayAPI)", f.edge)
 	}
@@ -217,7 +239,7 @@ func resolveEnumFields(r *noteResolver, o PlatformOptions, seed profileSeed) (re
 
 // wireProvisioningDeploy attaches the deploy block when provMode=deploy.
 func wireProvisioningDeploy(r *noteResolver, p *otilmv1alpha1.Platform, provMode string) {
-	if provMode != "deploy" {
+	if provMode != modeDeploy {
 		return
 	}
 	bootstrapRef := r.placeholder("provisioning.deploy.bootstrapSecretRef", "<placeholder, e.g. ilm-provisioning-bootstrap>")
@@ -233,13 +255,13 @@ func wireTLSCompanions(r *noteResolver, p *otilmv1alpha1.Platform, tlsSource str
 	case "letsEncrypt":
 		email := r.placeholder("edge.tls.letsEncrypt.email", "<placeholder, e.g. admin@example.com>")
 		p.Spec.Edge.TLS.LetsEncrypt = &otilmv1alpha1.LetsEncryptSpec{Email: email}
-	case "issuerRef":
+	case tlsIssuerRef:
 		name := r.placeholder("edge.tls.issuerRef.name", "<placeholder>")
 		p.Spec.Edge.TLS.IssuerRef = &otilmv1alpha1.CertManagerIssuerRef{
 			Name: name,
 			Kind: "ClusterIssuer",
 		}
-	case "secret":
+	case tlsSecret:
 		secretRef := r.placeholder("edge.tls.secretRef", "<placeholder, e.g. ilm-ingress-tls>")
 		p.Spec.Edge.TLS.SecretRef = strPtr(secretRef)
 	}
@@ -259,11 +281,11 @@ func wireGatewayAPI(r *noteResolver, p *otilmv1alpha1.Platform, edge string) {
 // resolveHostName resolves the hostName from the option set or generates a placeholder.
 func resolveHostName(r *noteResolver, o PlatformOptions) string {
 	if o.Set["host"] {
-		r.notes = append(r.notes, EffectiveNote{Field: "common.hostName", Value: o.HostName, Source: sourceFlag})
+		r.notes = append(r.notes, EffectiveNote{Field: fieldHostName, Value: o.HostName, Source: sourceFlag})
 		return o.HostName
 	}
 	hostName := fmt.Sprintf("%s.example.com", o.Name)
-	r.placeholder("common.hostName", hostName)
+	r.placeholder(fieldHostName, hostName)
 	return hostName
 }
 
@@ -366,7 +388,7 @@ func ScaffoldPlatform(o PlatformOptions) (*otilmv1alpha1.Platform, []EffectiveNo
 
 	// keycloak-mode "none" OMITS spec.keycloak entirely; the CRD enum only accepts
 	// "external" and "managed" — "none" is a CLI-level sentinel that means omit.
-	if f.keycloakMode != "none" {
+	if f.keycloakMode != modeNone {
 		p.Spec.Keycloak = &otilmv1alpha1.KeycloakSpec{Mode: f.keycloakMode}
 	}
 

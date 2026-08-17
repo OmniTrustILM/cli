@@ -71,11 +71,21 @@ const (
 	kindClusterRoleBinding = "ClusterRoleBinding"
 	kindNamespace          = "Namespace"
 	kindCRD                = "CustomResourceDefinition"
+	kindCatalogSource      = "CatalogSource"
 
 	apiRBAC = "rbac.authorization.k8s.io/v1"
 	apiCore = "v1"
 
 	rbacGroup = "rbac.authorization.k8s.io"
+	groupApps = "apps"
+
+	// Unstructured object keys the builders assemble manifests from.
+	keyAPIVersion = "apiVersion"
+	keyName       = "name"
+	keyKind       = "kind"
+	keyMetadata   = "metadata"
+	keyNamespace  = "namespace"
+	keySpec       = "spec"
 
 	keycloakOperatorSA         = "keycloak-operator"
 	keycloakAllNsRole          = "keycloak-operator-allns-role"
@@ -239,9 +249,9 @@ func buildKeycloak(ctx context.Context) (crds, controller []*unstructured.Unstru
 // newKeycloakNamespace constructs the keycloak Namespace object.
 func newKeycloakNamespace() *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": apiCore,
-		"kind":       kindNamespace,
-		"metadata":   map[string]any{"name": keycloakNamespace},
+		keyAPIVersion: apiCore,
+		keyKind:       kindNamespace,
+		keyMetadata:   map[string]any{keyName: keycloakNamespace},
 	}}
 }
 
@@ -292,7 +302,7 @@ func mutateKeycloakOperatorEnv(objs []*unstructured.Unstructured) error {
 // key has its value overwritten to JOSDK_ALL_NAMESPACES, and a missing key is
 // appended.
 func addAllNamespacesEnv(dep *unstructured.Unstructured) error {
-	containers, found, err := unstructured.NestedSlice(dep.Object, "spec", "template", "spec", "containers")
+	containers, found, err := unstructured.NestedSlice(dep.Object, keySpec, "template", keySpec, "containers")
 	if err != nil {
 		return fmt.Errorf("keycloak: read operator containers: %w", err)
 	}
@@ -310,7 +320,7 @@ func addAllNamespacesEnv(dep *unstructured.Unstructured) error {
 		c["env"] = env
 		containers[i] = c
 	}
-	if err := unstructured.SetNestedSlice(dep.Object, containers, "spec", "template", "spec", "containers"); err != nil {
+	if err := unstructured.SetNestedSlice(dep.Object, containers, keySpec, "template", keySpec, "containers"); err != nil {
 		return fmt.Errorf("keycloak: set operator containers: %w", err)
 	}
 	return nil
@@ -320,12 +330,12 @@ func addAllNamespacesEnv(dep *unstructured.Unstructured) error {
 // overwritten, otherwise a new entry is appended. It never duplicates a key.
 func upsertEnv(env []any, name, value string) []any {
 	for _, e := range env {
-		if m, ok := e.(map[string]any); ok && m["name"] == name {
+		if m, ok := e.(map[string]any); ok && m[keyName] == name {
 			m["value"] = value
 			return env
 		}
 	}
-	return append(env, map[string]any{"name": name, "value": value})
+	return append(env, map[string]any{keyName: name, "value": value})
 }
 
 // keycloakAllNamespacesRBAC synthesizes the cluster-wide RBAC that the
@@ -336,11 +346,11 @@ func upsertEnv(env []any, name, value string) []any {
 // upstream role on any Keycloak version bump.
 func keycloakAllNamespacesRBAC() []*unstructured.Unstructured {
 	role := &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": apiRBAC,
-		"kind":       kindClusterRole,
-		"metadata":   map[string]any{"name": keycloakAllNsRole},
+		keyAPIVersion: apiRBAC,
+		keyKind:       kindClusterRole,
+		keyMetadata:   map[string]any{keyName: keycloakAllNsRole},
 		"rules": []any{
-			policyRule([]string{"apps"}, []string{"statefulsets"}, verbGet, verbList, verbWatch, verbCreate, verbDelete, verbPatch, verbUpdate),
+			policyRule([]string{groupApps}, []string{"statefulsets"}, verbGet, verbList, verbWatch, verbCreate, verbDelete, verbPatch, verbUpdate),
 			policyRule([]string{""}, []string{"configmaps"}, verbGet, verbList, verbWatch),
 			policyRule([]string{""}, []string{"secrets", "services"}, verbGet, verbList, verbWatch, verbCreate, verbDelete, verbPatch, verbUpdate),
 			policyRule([]string{""}, []string{"pods"}, verbList),
@@ -371,20 +381,20 @@ func policyRule(apiGroups, resources []string, verbs ...string) map[string]any {
 // keycloak-operator ServiceAccount (ns keycloak) to the ClusterRole roleRef.
 func clusterRoleBinding(name, roleRef string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": apiRBAC,
-		"kind":       kindClusterRoleBinding,
-		"metadata":   map[string]any{"name": name},
+		keyAPIVersion: apiRBAC,
+		keyKind:       kindClusterRoleBinding,
+		keyMetadata:   map[string]any{keyName: name},
 		"roleRef": map[string]any{
 			"apiGroup": rbacGroup,
-			"kind":     kindClusterRole,
-			"name":     roleRef,
+			keyKind:    kindClusterRole,
+			keyName:    roleRef,
 		},
 		"subjects": []any{
 			map[string]any{
-				"kind":      "ServiceAccount",
-				"apiGroup":  "",
-				"name":      keycloakOperatorSA,
-				"namespace": keycloakNamespace,
+				keyKind:      "ServiceAccount",
+				"apiGroup":   "",
+				keyName:      keycloakOperatorSA,
+				keyNamespace: keycloakNamespace,
 			},
 		},
 	}}

@@ -39,7 +39,7 @@ func TestSchemaVersionStable(t *testing.T) {
 func TestNewManifest(t *testing.T) {
 	t.Parallel()
 	opts := CollectOptions{
-		Namespaces:    []string{"ilm"},
+		Namespaces:    []string{bundleNamespace},
 		AllNamespaces: false,
 		IncludeLogs:   true,
 		Since:         time.Hour,
@@ -75,7 +75,7 @@ func TestManifestRecordHelpers(t *testing.T) {
 func TestManifestJSONRoundTrip(t *testing.T) {
 	t.Parallel()
 	m := NewManifest(bundleV010, CollectOptions{
-		Namespaces:  []string{"ilm"},
+		Namespaces:  []string{bundleNamespace},
 		IncludeLogs: true,
 		Redact:      true,
 		Format:      FormatZip,

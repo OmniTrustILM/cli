@@ -40,14 +40,14 @@ func boolPtr(b bool) *bool    { return &b }
 func TestCredentials_ResolvesCertAndPasswordRefs(t *testing.T) {
 	p := &otilmv1alpha1.Platform{
 		TypeMeta:   metav1.TypeMeta{APIVersion: platformAPIGroup, Kind: platformKind},
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ilm"},
+		ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: platformName},
 		Spec: otilmv1alpha1.PlatformSpec{
 			DeletionPolicy: otilmv1alpha1.PlatformDeletionPolicyRetain,
 			RegisterAdmin: &otilmv1alpha1.RegisterAdminSpec{
 				Enabled:  true,
 				Username: "admin",
 				Certificate: &otilmv1alpha1.AdminCertificateSpec{
-					Enabled: boolPtr(true), Source: "provided", SecretRef: strPtr(platformAdminCert),
+					Enabled: boolPtr(true), Source: certSourceProvided, SecretRef: strPtr(platformAdminCert),
 				},
 				Password: &otilmv1alpha1.AdminPasswordSpec{
 					Enabled: true, SecretRef: platformAdminPwd, PasswordKey: platformPassword,
@@ -56,18 +56,18 @@ func TestCredentials_ResolvesCertAndPasswordRefs(t *testing.T) {
 		},
 	}
 	certSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: platformAdminCert, Namespace: "ilm"},
+		ObjectMeta: metav1.ObjectMeta{Name: platformAdminCert, Namespace: platformName},
 		Type:       corev1.SecretTypeTLS,
 		Data:       map[string][]byte{"tls.crt": []byte("PEM"), "tls.key": []byte("KEY")},
 	}
 	pwSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: platformAdminPwd, Namespace: "ilm"},
+		ObjectMeta: metav1.ObjectMeta{Name: platformAdminPwd, Namespace: platformName},
 		Data:       map[string][]byte{platformPassword: []byte("s3cr3t")},
 	}
 	o, out := newFakeOptions(t, p, certSecret, pwSecret)
 
 	cmd := NewCredentialsCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm"})
+	cmd.SetArgs([]string{platformName, "-n", platformName})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -86,12 +86,12 @@ func TestCredentials_ResolvesCertAndPasswordRefs(t *testing.T) {
 func TestCredentials_NoRegisterAdmin(t *testing.T) {
 	p := &otilmv1alpha1.Platform{
 		TypeMeta:   metav1.TypeMeta{APIVersion: platformAPIGroup, Kind: platformKind},
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ilm"},
+		ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: platformName},
 		Spec:       otilmv1alpha1.PlatformSpec{DeletionPolicy: otilmv1alpha1.PlatformDeletionPolicyRetain},
 	}
 	o, out := newFakeOptions(t, p)
 	cmd := NewCredentialsCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm"})
+	cmd.SetArgs([]string{platformName, "-n", platformName})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -102,18 +102,18 @@ func TestCredentials_NoRegisterAdmin(t *testing.T) {
 func TestCredentials_MissingSecretReported(t *testing.T) {
 	p := &otilmv1alpha1.Platform{
 		TypeMeta:   metav1.TypeMeta{APIVersion: platformAPIGroup, Kind: platformKind},
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ilm"},
+		ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: platformName},
 		Spec: otilmv1alpha1.PlatformSpec{
 			DeletionPolicy: otilmv1alpha1.PlatformDeletionPolicyRetain,
 			RegisterAdmin: &otilmv1alpha1.RegisterAdminSpec{
 				Enabled:     true,
-				Certificate: &otilmv1alpha1.AdminCertificateSpec{Enabled: boolPtr(true), Source: "provided", SecretRef: strPtr("absent")},
+				Certificate: &otilmv1alpha1.AdminCertificateSpec{Enabled: boolPtr(true), Source: certSourceProvided, SecretRef: strPtr("absent")},
 			},
 		},
 	}
 	o, out := newFakeOptions(t, p)
 	cmd := NewCredentialsCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm"})
+	cmd.SetArgs([]string{platformName, "-n", platformName})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)

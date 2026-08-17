@@ -66,7 +66,7 @@ func TestNewSingleNameCommand_RunE(t *testing.T) {
 	})
 	opts := &cmdutil.SingleNameOpts{
 		ClientFn:    func() (*k8s.Client, error) { return &k8s.Client{}, nil },
-		NamespaceFn: func() (string, bool, error) { return "ns1", true, nil },
+		NamespaceFn: func() (string, bool, error) { return testNamespace, true, nil },
 	}
 	p := render.NewPrinter(&bytes.Buffer{}, &bytes.Buffer{})
 	o := &cli.Options{Printer: p}

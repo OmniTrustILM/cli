@@ -67,10 +67,10 @@ func TestExitCodes(t *testing.T) {
 		want int
 	}{
 		{"help is success", []string{"--help"}, ExitOK},
-		{"version is success", []string{"version", "--short"}, ExitOK},
+		{"version is success", []string{versionCmdName, "--short"}, ExitOK},
 		{"unknown command is usage", []string{"definitely-not-a-command"}, ExitUsage},
-		{"unknown flag is usage", []string{"version", "--definitely-not-a-flag"}, ExitUsage},
-		{"completion is success", []string{"completion", "bash"}, ExitOK},
+		{"unknown flag is usage", []string{versionCmdName, "--definitely-not-a-flag"}, ExitUsage},
+		{"completion is success", []string{"completion", shellBash}, ExitOK},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -127,7 +127,7 @@ func TestNonTTYNoColorNoPrompt(t *testing.T) {
 
 	require.NoError(t, p.PrintTable(render.Table{
 		Columns: []string{"NAME", "PHASE"},
-		Rows:    [][]string{{"ilm", "Running"}},
+		Rows:    [][]string{{cliPlatformName, "Running"}},
 	}))
 	assert.NotContains(t, out.String(), "\x1b[", "no ANSI escapes on non-TTY")
 }

@@ -96,7 +96,7 @@ func readZip(t *testing.T, raw []byte) map[string][]byte {
 
 func TestCollect_WritesVersionsConfigStateAndManifest(t *testing.T) {
 	t.Parallel()
-	plat := seedPlatform("ilm", "ilm")
+	plat := seedPlatform(bundleNamespace, bundleNamespace)
 	cl := newTestClient(t, plat, seedOperatorDeploy("ilm-operator-system"))
 	c := NewCollector(cl, nil)
 
@@ -136,7 +136,7 @@ func TestCollect_WritesVersionsConfigStateAndManifest(t *testing.T) {
 
 func TestCollect_TGZFormat(t *testing.T) {
 	t.Parallel()
-	cl := newTestClient(t, seedPlatform("ilm", "ilm"))
+	cl := newTestClient(t, seedPlatform(bundleNamespace, bundleNamespace))
 	c := NewCollector(cl, nil)
 
 	var buf bytes.Buffer
@@ -154,7 +154,7 @@ func TestCollect_TGZFormat(t *testing.T) {
 
 func TestCollect_RedactionTogglesYAML(t *testing.T) {
 	t.Parallel()
-	cl := newTestClient(t, seedPlatform("ilm", "ilm"))
+	cl := newTestClient(t, seedPlatform(bundleNamespace, bundleNamespace))
 	c := NewCollector(cl, nil)
 
 	// Redaction on => the manifest declares it.
@@ -172,14 +172,14 @@ func TestCollect_RedactionTogglesYAML(t *testing.T) {
 func TestCollect_NamespaceScope(t *testing.T) {
 	t.Parallel()
 	cl := newTestClient(t,
-		seedPlatform("ilm", "a"),
+		seedPlatform(bundleNamespace, "a"),
 		seedPlatform("other", "b"),
 	)
 	c := NewCollector(cl, nil)
 
 	var buf bytes.Buffer
 	_, err := c.Collect(context.Background(), CollectOptions{
-		Namespaces: []string{"ilm"},
+		Namespaces: []string{bundleNamespace},
 		Redact:     true,
 		Format:     FormatZip,
 	}, &buf)
@@ -195,7 +195,7 @@ func TestCollect_NamespaceScope(t *testing.T) {
 func TestCollect_GracefulDegradationOnForbidden(t *testing.T) {
 	t.Parallel()
 	// A client whose List of CRDs is forbidden but Platforms succeed.
-	plat := seedPlatform("ilm", "ilm")
+	plat := seedPlatform(bundleNamespace, bundleNamespace)
 	cl := newTestClient(t, plat)
 	cl.Typed = forbiddenCRDClient{Client: cl.Typed}
 	c := NewCollector(cl, nil)
@@ -218,7 +218,7 @@ func TestCollect_GracefulDegradationOnForbidden(t *testing.T) {
 func TestCollect_FatalOnNonRBACError(t *testing.T) {
 	t.Parallel()
 	// A client that injects a non-RBAC (generic) error on List of CRDs.
-	plat := seedPlatform("ilm", "ilm")
+	plat := seedPlatform(bundleNamespace, bundleNamespace)
 	cl := newTestClient(t, plat)
 	cl.Typed = fatalCRDClient{Client: cl.Typed}
 	c := NewCollector(cl, nil)
@@ -233,7 +233,7 @@ func TestCollect_FatalOnClusterInfoNodeError(t *testing.T) {
 	t.Parallel()
 	// A client that injects a non-RBAC error when listing Nodes,
 	// exercising the collectClusterInfo fatal-propagation path.
-	plat := seedPlatform("ilm", "ilm")
+	plat := seedPlatform(bundleNamespace, bundleNamespace)
 	cl := newTestClient(t, plat)
 	cl.Typed = fatalNodeClient{Client: cl.Typed}
 	c := NewCollector(cl, nil)
@@ -248,7 +248,7 @@ func TestCollect_FatalOnPlatformListError(t *testing.T) {
 	t.Parallel()
 	// A client that injects a non-RBAC error when listing Platforms,
 	// exercising the collectConfigAndState and collectPlatforms fatal path.
-	plat := seedPlatform("ilm", "ilm")
+	plat := seedPlatform(bundleNamespace, bundleNamespace)
 	cl := newTestClient(t, plat)
 	cl.Typed = fatalPlatformClient{Client: cl.Typed}
 	c := NewCollector(cl, nil)
@@ -271,7 +271,7 @@ func TestCollect_RedactionWritesRedactedBytesToArchive(t *testing.T) {
 	// then verify the manifest.Redacted field and that both archives are valid.
 	// For a genuine byte-level proof we seed a writeCR call via a direct unit
 	// assertion on the redactor below.
-	plat := seedPlatform("ilm", "secret-test")
+	plat := seedPlatform(bundleNamespace, "secret-test")
 	cl := newTestClient(t, plat)
 	c := NewCollector(cl, nil)
 
@@ -309,7 +309,7 @@ func TestCollect_RedactionWritesRedactedBytesToArchive(t *testing.T) {
 
 func TestCollect_IncludeLogsGating(t *testing.T) {
 	t.Parallel()
-	plat := seedPlatform("ilm", "ilm")
+	plat := seedPlatform(bundleNamespace, bundleNamespace)
 	cl := newTestClient(t, plat)
 	c := NewCollector(cl, nil)
 
@@ -360,9 +360,9 @@ func seedProxy(ns, name string) *otilmv1alpha1.Proxy {
 func TestCollect_ConnectorsAndProxiesWrittenToArchive(t *testing.T) {
 	t.Parallel()
 	cl := newTestClient(t,
-		seedPlatform("ilm", "ilm"),
-		seedConnector("ilm", "my-connector"),
-		seedProxy("ilm", "my-proxy"),
+		seedPlatform(bundleNamespace, bundleNamespace),
+		seedConnector(bundleNamespace, "my-connector"),
+		seedProxy(bundleNamespace, "my-proxy"),
 	)
 	c := NewCollector(cl, nil)
 
@@ -393,23 +393,23 @@ func TestCollect_ConnectorAndProxyLogs(t *testing.T) {
 	connPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testConnectorName + "-abc",
-			Namespace: "ilm",
-			Labels:    map[string]string{"otilm.com/connector": testConnectorName},
+			Namespace: bundleNamespace,
+			Labels:    map[string]string{connectorPodLabel: testConnectorName},
 		},
-		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "connector"}}},
+		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: workloadKindConnector}}},
 	}
 	proxyPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testProxyName + "-xyz",
-			Namespace: "ilm",
-			Labels:    map[string]string{"otilm.com/proxy": testProxyName},
+			Namespace: bundleNamespace,
+			Labels:    map[string]string{proxyPodLabel: testProxyName},
 		},
-		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "proxy"}}},
+		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: workloadKindProxy}}},
 	}
 	cl := newTestClient(t,
-		seedPlatform("ilm", "ilm"),
-		seedConnector("ilm", testConnectorName),
-		seedProxy("ilm", testProxyName),
+		seedPlatform(bundleNamespace, bundleNamespace),
+		seedConnector(bundleNamespace, testConnectorName),
+		seedProxy(bundleNamespace, testProxyName),
 		connPod, proxyPod,
 	)
 	c := NewCollector(cl, nil)
@@ -434,12 +434,12 @@ func TestCollect_ConnectorProxyLogsGatedByIncludeLogs(t *testing.T) {
 	connPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testConnectorName + "-abc",
-			Namespace: "ilm",
-			Labels:    map[string]string{"otilm.com/connector": testConnectorName},
+			Namespace: bundleNamespace,
+			Labels:    map[string]string{connectorPodLabel: testConnectorName},
 		},
-		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "connector"}}},
+		Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: workloadKindConnector}}},
 	}
-	cl := newTestClient(t, seedConnector("ilm", testConnectorName), connPod)
+	cl := newTestClient(t, seedConnector(bundleNamespace, testConnectorName), connPod)
 	c := NewCollector(cl, nil)
 
 	var buf bytes.Buffer
@@ -465,7 +465,7 @@ func TestNameFromBase(t *testing.T) {
 func TestCollect_CapabilitiesNilSkipped(t *testing.T) {
 	t.Parallel()
 	// Nil Caps means capabilities.json is NOT written.
-	cl := newTestClient(t, seedPlatform("ilm", "ilm"))
+	cl := newTestClient(t, seedPlatform(bundleNamespace, bundleNamespace))
 	c := NewCollector(cl, nil)
 
 	var buf bytes.Buffer
@@ -479,7 +479,7 @@ func TestCollect_CapabilitiesNilSkipped(t *testing.T) {
 
 func TestCollect_CapabilitiesNonNilWritten(t *testing.T) {
 	t.Parallel()
-	cl := newTestClient(t, seedPlatform("ilm", "ilm"))
+	cl := newTestClient(t, seedPlatform(bundleNamespace, bundleNamespace))
 
 	// Build a Reporter backed by a discovery REST mapper that returns no-match
 	// errors for all GVKs (empty group version list), so Detect returns results
@@ -500,16 +500,16 @@ func TestCollect_CapabilitiesNonNilWritten(t *testing.T) {
 func TestPrimaryContainer(t *testing.T) {
 	t.Parallel()
 	multi := &corev1.Pod{Spec: corev1.PodSpec{Containers: []corev1.Container{
-		{Name: "wait-for-auth"}, {Name: "auth-opa"}, {Name: "core"},
+		{Name: "wait-for-auth"}, {Name: "auth-opa"}, {Name: componentCore},
 	}}}
-	assert.Equal(t, "core", primaryContainer(multi, "core"), "picks the container named after the component")
+	assert.Equal(t, componentCore, primaryContainer(multi, componentCore), "picks the container named after the component")
 
 	noMatch := &corev1.Pod{Spec: corev1.PodSpec{Containers: []corev1.Container{
 		{Name: "sidecar"}, {Name: "app"},
 	}}}
-	assert.Equal(t, "sidecar", primaryContainer(noMatch, "core"), "falls back to the first container")
+	assert.Equal(t, "sidecar", primaryContainer(noMatch, componentCore), "falls back to the first container")
 
-	assert.Equal(t, "", primaryContainer(&corev1.Pod{}, "core"), "empty when the pod has no containers")
+	assert.Equal(t, "", primaryContainer(&corev1.Pod{}, componentCore), "empty when the pod has no containers")
 }
 
 // TestCollect_MultiContainerPodLogs proves the log path works for a pod with
@@ -518,18 +518,18 @@ func TestPrimaryContainer(t *testing.T) {
 // PodLogs streams it into the archive.
 func TestCollect_MultiContainerPodLogs(t *testing.T) {
 	t.Parallel()
-	plat := seedPlatform("ilm", "ilm")
+	plat := seedPlatform(bundleNamespace, bundleNamespace)
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "core-abc123",
-			Namespace: "ilm",
+			Namespace: bundleNamespace,
 			Labels: map[string]string{
-				"app.kubernetes.io/instance":  "ilm",
-				"app.kubernetes.io/component": "core",
+				"app.kubernetes.io/instance":  bundleNamespace,
+				"app.kubernetes.io/component": componentCore,
 			},
 		},
 		Spec: corev1.PodSpec{Containers: []corev1.Container{
-			{Name: "wait-for-auth"}, {Name: "auth-opa"}, {Name: "core"},
+			{Name: "wait-for-auth"}, {Name: "auth-opa"}, {Name: componentCore},
 		}},
 	}
 	cl := newTestClient(t, plat, pod)

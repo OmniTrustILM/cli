@@ -134,18 +134,18 @@ func TestFactory_Client_MapperError(t *testing.T) {
 func TestClient_Events_EmptyUID(t *testing.T) {
 	t.Parallel()
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ilm", Name: "alpha"},
+		ObjectMeta: metav1.ObjectMeta{Namespace: k8sILM, Name: k8sAlpha},
 	}
-	plat.UID = "uid-1"
+	plat.UID = k8sPlatformUID
 
 	// Event with no UID set on the InvolvedObject — must match by name alone.
 	ev := &corev1.Event{
-		ObjectMeta:     metav1.ObjectMeta{Namespace: "ilm", Name: "ev-name-only"},
-		InvolvedObject: corev1.ObjectReference{Namespace: "ilm", Name: "alpha", UID: ""},
+		ObjectMeta:     metav1.ObjectMeta{Namespace: k8sILM, Name: "ev-name-only"},
+		InvolvedObject: corev1.ObjectReference{Namespace: k8sILM, Name: k8sAlpha, UID: ""},
 		Reason:         "NoUIDMatch",
 	}
 	c := NewFakeClient(t, FakeClientOptions{Objects: []ctrlclient.Object{plat, ev}})
-	events, err := c.Events(context.Background(), "ilm", plat)
+	events, err := c.Events(context.Background(), k8sILM, plat)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 	assert.Equal(t, "NoUIDMatch", events[0].Reason)
@@ -156,17 +156,17 @@ func TestClient_Events_EmptyUID(t *testing.T) {
 func TestClient_Events_WrongUID(t *testing.T) {
 	t.Parallel()
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ilm", Name: "alpha"},
+		ObjectMeta: metav1.ObjectMeta{Namespace: k8sILM, Name: k8sAlpha},
 	}
 	plat.UID = "uid-correct"
 
 	// Event name matches but UID differs — must be excluded.
 	ev := &corev1.Event{
-		ObjectMeta:     metav1.ObjectMeta{Namespace: "ilm", Name: "ev-wrong-uid"},
-		InvolvedObject: corev1.ObjectReference{Namespace: "ilm", Name: "alpha", UID: "uid-wrong"},
+		ObjectMeta:     metav1.ObjectMeta{Namespace: k8sILM, Name: "ev-wrong-uid"},
+		InvolvedObject: corev1.ObjectReference{Namespace: k8sILM, Name: k8sAlpha, UID: "uid-wrong"},
 	}
 	c := NewFakeClient(t, FakeClientOptions{Objects: []ctrlclient.Object{plat, ev}})
-	events, err := c.Events(context.Background(), "ilm", plat)
+	events, err := c.Events(context.Background(), k8sILM, plat)
 	require.NoError(t, err)
 	assert.Empty(t, events, "event with wrong UID must be excluded")
 }

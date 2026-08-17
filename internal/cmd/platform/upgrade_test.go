@@ -37,7 +37,7 @@ import (
 func platformWithVersion(observed, spec string) *otilmv1alpha1.Platform {
 	return &otilmv1alpha1.Platform{
 		TypeMeta:   metav1.TypeMeta{APIVersion: platformAPIGroup, Kind: platformKind},
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ilm"},
+		ObjectMeta: metav1.ObjectMeta{Name: platformName, Namespace: platformName},
 		Spec: otilmv1alpha1.PlatformSpec{
 			Version:        spec,
 			DeletionPolicy: otilmv1alpha1.PlatformDeletionPolicyRetain,
@@ -51,7 +51,7 @@ func TestUpgrade_ForwardSucceeds(t *testing.T) {
 	o, out := newFakeOptions(t, p)
 
 	cmd := NewUpgradeCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "--to", platformVer2180})
+	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, platformVer2180})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -59,7 +59,7 @@ func TestUpgrade_ForwardSucceeds(t *testing.T) {
 
 	cl, err := o.Factory.Client()
 	require.NoError(t, err)
-	got, err := cl.GetPlatform(context.Background(), "ilm", "ilm")
+	got, err := cl.GetPlatform(context.Background(), platformName, platformName)
 	require.NoError(t, err)
 	assert.Equal(t, platformVer2180, got.Spec.Version)
 }
@@ -68,7 +68,7 @@ func TestUpgrade_RejectsDowngrade(t *testing.T) {
 	p := platformWithVersion(platformVer2180, platformVer2180)
 	o, out := newFakeOptions(t, p)
 	cmd := NewUpgradeCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "--to", platformVer2170})
+	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, platformVer2170})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -87,14 +87,14 @@ func TestUpgrade_AckFlagsSetManagedAcknowledged(t *testing.T) {
 	o, out := newFakeOptions(t, p)
 
 	cmd := NewUpgradeCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "--to", platformVer2180, "--ack-database", "--ack-messaging", "--ack-keycloak"})
+	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, platformVer2180, "--ack-database", "--ack-messaging", "--ack-keycloak"})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	require.NoError(t, cmd.Execute())
 
 	cl, _ := o.Factory.Client()
-	got, _ := cl.GetPlatform(context.Background(), "ilm", "ilm")
+	got, _ := cl.GetPlatform(context.Background(), platformName, platformName)
 	assert.True(t, got.Spec.Database.Managed.UpgradeAcknowledged)
 	assert.True(t, got.Spec.Messaging.Managed.UpgradeAcknowledged)
 	assert.True(t, got.Spec.Keycloak.Managed.UpgradeAcknowledged)
@@ -104,7 +104,7 @@ func TestUpgrade_RequiresTo(t *testing.T) {
 	p := platformWithVersion(platformVer2170, platformVer2170)
 	o, out := newFakeOptions(t, p)
 	cmd := NewUpgradeCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm"})
+	cmd.SetArgs([]string{platformName, "-n", platformName})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	assert.Error(t, cmd.Execute())
@@ -114,14 +114,14 @@ func TestUpgrade_DryRunDoesNotPatch(t *testing.T) {
 	p := platformWithVersion(platformVer2170, platformVer2170)
 	o, out := newFakeOptions(t, p)
 	cmd := NewUpgradeCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "--to", platformVer2180, "--dry-run"})
+	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, platformVer2180, "--dry-run"})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	require.NoError(t, cmd.Execute())
 
 	cl, _ := o.Factory.Client()
-	got, _ := cl.GetPlatform(context.Background(), "ilm", "ilm")
+	got, _ := cl.GetPlatform(context.Background(), platformName, platformName)
 	assert.Equal(t, platformVer2170, got.Spec.Version, "dry-run must not patch")
 	assert.Contains(t, out.String(), "would upgrade")
 }
@@ -130,7 +130,7 @@ func TestUpgrade_RejectsSameVersion(t *testing.T) {
 	p := platformWithVersion(platformVer2180, platformVer2180)
 	o, out := newFakeOptions(t, p)
 	cmd := NewUpgradeCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "--to", platformVer2180})
+	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, platformVer2180})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -149,7 +149,7 @@ func TestUpgrade_RejectsUnsupportedWithoutForce(t *testing.T) {
 	p := platformWithVersion(platformVer2180, platformVer2180)
 	o, out := newFakeOptions(t, p)
 	cmd := NewUpgradeCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "--to", unsupportedVersion})
+	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, unsupportedVersion})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -159,7 +159,7 @@ func TestUpgrade_RejectsUnsupportedWithoutForce(t *testing.T) {
 
 	// Spec.Version must NOT have been mutated.
 	cl, _ := o.Factory.Client()
-	got, _ := cl.GetPlatform(context.Background(), "ilm", "ilm")
+	got, _ := cl.GetPlatform(context.Background(), platformName, platformName)
 	assert.Equal(t, platformVer2180, got.Spec.Version, "unsupported target without --force must not patch")
 }
 
@@ -167,7 +167,7 @@ func TestUpgrade_UnsupportedWithForceSucceeds(t *testing.T) {
 	p := platformWithVersion(platformVer2180, platformVer2180)
 	o, out := newFakeOptions(t, p)
 	cmd := NewUpgradeCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "--to", unsupportedVersion, "--force"})
+	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, unsupportedVersion, "--force"})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -175,7 +175,7 @@ func TestUpgrade_UnsupportedWithForceSucceeds(t *testing.T) {
 
 	// Version must have been patched.
 	cl, _ := o.Factory.Client()
-	got, _ := cl.GetPlatform(context.Background(), "ilm", "ilm")
+	got, _ := cl.GetPlatform(context.Background(), platformName, platformName)
 	assert.Equal(t, unsupportedVersion, got.Spec.Version)
 
 	// A warning must have been written to ErrOut.
@@ -188,7 +188,7 @@ func TestUpgrade_DowngradeWithForceStillRejected(t *testing.T) {
 	p := platformWithVersion(platformVer2180, platformVer2180)
 	o, out := newFakeOptions(t, p)
 	cmd := NewUpgradeCommand(o)
-	cmd.SetArgs([]string{"ilm", "-n", "ilm", "--to", platformVer2170, "--force"})
+	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, platformVer2170, "--force"})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -198,6 +198,6 @@ func TestUpgrade_DowngradeWithForceStillRejected(t *testing.T) {
 
 	// Spec.Version must NOT have been mutated.
 	cl, _ := o.Factory.Client()
-	got, _ := cl.GetPlatform(context.Background(), "ilm", "ilm")
+	got, _ := cl.GetPlatform(context.Background(), platformName, platformName)
 	assert.Equal(t, platformVer2180, got.Spec.Version, "--force must not override the no-downgrade guard")
 }

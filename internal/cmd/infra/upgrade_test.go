@@ -101,7 +101,7 @@ func TestUpgrade_Wait_TimesOut(t *testing.T) {
 	cmd.SetArgs([]string{
 		"--manifest", writeManifest(t, deploymentManifest),
 		"-n", infraOperatorSys,
-		"--wait", "--timeout", "300ms",
+		"--wait", "--timeout", infraShortTimeout,
 	})
 	err := cmd.Execute()
 	require.Error(t, err)

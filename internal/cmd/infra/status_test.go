@@ -63,7 +63,7 @@ func newStatusFixtures(t *testing.T, objs ...ctrlclient.Object) (*k8s.Client, *c
 
 func TestRunStatus_TableShowsPlatformPhaseAndReadySummary(t *testing.T) {
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ns1"},
+		ObjectMeta: metav1.ObjectMeta{Name: infraPlatformName, Namespace: infraNamespace},
 		Status: otilmv1alpha1.PlatformStatus{
 			Phase: otilmv1alpha1.PlatformPhaseRunning, ObservedVersion: infraVer2180,
 			Conditions: []metav1.Condition{
@@ -76,9 +76,9 @@ func TestRunStatus_TableShowsPlatformPhaseAndReadySummary(t *testing.T) {
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{"ns1"}}))
+	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{infraNamespace}}))
 	s := out.String()
-	assert.Contains(t, s, "ilm")
+	assert.Contains(t, s, infraPlatformName)
 	assert.Contains(t, s, infraRunning)
 	assert.Contains(t, s, infraVer2180)
 	// Available=True and Progressing=False are BOTH healthy (Progressing is a
@@ -87,20 +87,20 @@ func TestRunStatus_TableShowsPlatformPhaseAndReadySummary(t *testing.T) {
 }
 
 func TestRunStatus_VerboseListsConnectorsAndProxies(t *testing.T) {
-	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ns1"}}
+	plat := &otilmv1alpha1.Platform{ObjectMeta: metav1.ObjectMeta{Name: infraPlatformName, Namespace: infraNamespace}}
 	conn := &otilmv1alpha1.Connector{
-		ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: "ns1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: infraNamespace},
 		Status:     otilmv1alpha1.ConnectorStatus{Phase: otilmv1alpha1.ConnectorPhaseRunning},
 	}
 	prx := &otilmv1alpha1.Proxy{
-		ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: "ns1"},
+		ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: infraNamespace},
 		Status:     otilmv1alpha1.ProxyStatus{Phase: otilmv1alpha1.ProxyPhaseScaledDown},
 	}
 	c, rep := newStatusFixtures(t, plat, conn, prx)
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{"ns1"}, Verbose: 1}))
+	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{infraNamespace}, Verbose: 1}))
 	s := out.String()
 	assert.Contains(t, s, "c1")
 	assert.Contains(t, s, "p1")
@@ -109,7 +109,7 @@ func TestRunStatus_VerboseListsConnectorsAndProxies(t *testing.T) {
 
 func TestRunStatus_JSONEmitsSnapshot(t *testing.T) {
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ns1"},
+		ObjectMeta: metav1.ObjectMeta{Name: infraPlatformName, Namespace: infraNamespace},
 		Status:     otilmv1alpha1.PlatformStatus{Phase: otilmv1alpha1.PlatformPhaseRunning},
 	}
 	c, rep := newStatusFixtures(t, plat)
@@ -117,7 +117,7 @@ func TestRunStatus_JSONEmitsSnapshot(t *testing.T) {
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
 	*p.FormatPtrForTest() = "json"
-	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{"ns1"}}))
+	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{infraNamespace}}))
 	var snap analyze.Snapshot
 	require.NoError(t, json.Unmarshal(out.Bytes(), &snap))
 	require.Len(t, snap.Platforms, 1)
@@ -126,7 +126,7 @@ func TestRunStatus_JSONEmitsSnapshot(t *testing.T) {
 
 func TestRunStatus_YAMLEmitsSnapshot(t *testing.T) {
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ns1"},
+		ObjectMeta: metav1.ObjectMeta{Name: infraPlatformName, Namespace: infraNamespace},
 		Status:     otilmv1alpha1.PlatformStatus{Phase: otilmv1alpha1.PlatformPhaseRunning},
 	}
 	c, rep := newStatusFixtures(t, plat)
@@ -134,7 +134,7 @@ func TestRunStatus_YAMLEmitsSnapshot(t *testing.T) {
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
 	*p.FormatPtrForTest() = "yaml"
-	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{"ns1"}}))
+	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{infraNamespace}}))
 	assert.Contains(t, out.String(), infraRunning)
 }
 
@@ -144,7 +144,7 @@ func TestRunStatus_OperatorReadyLine(t *testing.T) {
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{"ns1"}}))
+	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{infraNamespace}}))
 	assert.Contains(t, out.String(), "Operator:")
 }
 
@@ -185,7 +185,7 @@ func TestRenderStatusTables_OperatorReady(t *testing.T) {
 
 func TestRunStatus_VerboseTwoEnrichesManagedInfra(t *testing.T) {
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ns1"},
+		ObjectMeta: metav1.ObjectMeta{Name: infraPlatformName, Namespace: infraNamespace},
 		Status:     otilmv1alpha1.PlatformStatus{Phase: otilmv1alpha1.PlatformPhaseRunning},
 	}
 	c, rep := newStatusFixtures(t, plat)
@@ -193,8 +193,8 @@ func TestRunStatus_VerboseTwoEnrichesManagedInfra(t *testing.T) {
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
 	// Verbose=2 exercises the enrichManagedInfra branch inside runStatus.
-	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{"ns1"}, Verbose: 2}))
-	assert.Contains(t, out.String(), "ilm")
+	require.NoError(t, runStatus(context.Background(), c, rep, p, statusOptions{Namespaces: []string{infraNamespace}, Verbose: 2}))
+	assert.Contains(t, out.String(), infraPlatformName)
 }
 
 func TestRenderStatusTables_NotReadyNoVersion(t *testing.T) {
@@ -228,7 +228,7 @@ func foreignCRStatus(apiVersion, kind, ns, name string, status map[string]any) *
 }
 
 func TestEnrichManagedInfra_DBManagedBranch(t *testing.T) {
-	const ns, name = "ns1", "ilm"
+	const ns, name = infraNamespace, infraPlatformName
 
 	cnpg := foreignCRStatus(
 		"postgresql.cnpg.io/v1", "Cluster", ns, name,
@@ -264,7 +264,7 @@ func TestEnrichManagedInfra_DBManagedBranch(t *testing.T) {
 }
 
 func TestEnrichManagedInfra_KeycloakBranch(t *testing.T) {
-	const ns, name = "ns2", "ilm"
+	const ns, name = "ns2", infraPlatformName
 
 	kc := foreignCRStatus(
 		"k8s.keycloak.org/v2alpha1", "Keycloak", ns, name,
@@ -301,7 +301,7 @@ func TestWatchStatus_CancelReturnsNil(t *testing.T) {
 
 	// watchStatus uses a 2 s ticker internally; with a 200 ms context deadline it
 	// runs one iteration and then returns nil on ctx.Done — never reaches the ticker.
-	err := watchStatus(ctx, c, rep, p, statusOptions{Namespaces: []string{"ns1"}})
+	err := watchStatus(ctx, c, rep, p, statusOptions{Namespaces: []string{infraNamespace}})
 	assert.NoError(t, err)
 }
 
@@ -310,7 +310,7 @@ func TestWatchStatus_CancelReturnsNil(t *testing.T) {
 // from the fake-backed client without error.
 func TestNewStatusCommand_RunE_RendersFakeClient(t *testing.T) {
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ns1"},
+		ObjectMeta: metav1.ObjectMeta{Name: infraPlatformName, Namespace: infraNamespace},
 		Status:     otilmv1alpha1.PlatformStatus{Phase: otilmv1alpha1.PlatformPhaseRunning, ObservedVersion: infraVer2180},
 	}
 
@@ -332,6 +332,6 @@ func TestNewStatusCommand_RunE_RendersFakeClient(t *testing.T) {
 
 	require.NoError(t, cmd.RunE(cmd, []string{}))
 	s2 := out.String()
-	assert.Contains(t, s2, "ilm")
+	assert.Contains(t, s2, infraPlatformName)
 	assert.Contains(t, s2, infraRunning)
 }

@@ -106,15 +106,15 @@ func TestSnapshotShapeCompiles(t *testing.T) {
 	t.Parallel()
 	s := &Snapshot{
 		ClientVersion:     "v0.1.0",
-		OperatorVersion:   "2.18.0",
+		OperatorVersion:   analyzeVer2180,
 		OperatorReady:     true,
 		Capabilities:      []capabilities.Result{{Dep: capabilities.DepCNPG, Present: true}},
-		SupportedVersions: []string{"2.18.0"},
+		SupportedVersions: []string{analyzeVer2180},
 		MissingRefs:       []string{"Secret/ns/missing"},
 		Platforms: []ResourceSnapshot{{
-			GVK:         "Platform.otilm.com/v1alpha1",
+			GVK:         analyzeAPIGroup,
 			Namespace:   "ns",
-			Name:        "ilm",
+			Name:        analyzePlatformName,
 			Phase:       "Running",
 			ObservedGen: 2,
 			Generation:  2,
@@ -122,10 +122,10 @@ func TestSnapshotShapeCompiles(t *testing.T) {
 			SpecModes:   capabilities.Modes{DBManaged: true},
 			SecretRefs:  []string{"ilm-db"},
 			IssuerRefs:  []string{"ilm-issuer"},
-			Logs:        map[string]string{"core": "ok"},
+			Logs:        map[string]string{analyzeCoreComponent: "ok"},
 		}},
 	}
-	assert.Equal(t, "ilm", s.Platforms[0].Name)
+	assert.Equal(t, analyzePlatformName, s.Platforms[0].Name)
 }
 
 func TestResourceRef(t *testing.T) {
@@ -137,17 +137,17 @@ func TestResourceRef(t *testing.T) {
 	}{
 		{
 			name: "platform with dot-qualified GVK",
-			rs:   ResourceSnapshot{GVK: "Platform.otilm.com/v1alpha1", Namespace: "ns", Name: "ilm"},
+			rs:   ResourceSnapshot{GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName},
 			want: "Platform/ns/ilm",
 		},
 		{
 			name: "connector with dot-qualified GVK",
-			rs:   ResourceSnapshot{GVK: "Connector.otilm.com/v1alpha1", Namespace: "prod", Name: "my-conn"},
+			rs:   ResourceSnapshot{GVK: GVKConnector, Namespace: "prod", Name: "my-conn"},
 			want: "Connector/prod/my-conn",
 		},
 		{
 			name: "bare kind (no dot)",
-			rs:   ResourceSnapshot{GVK: "Platform", Namespace: "ns", Name: "ilm"},
+			rs:   ResourceSnapshot{GVK: "Platform", Namespace: "ns", Name: analyzePlatformName},
 			want: "Platform/ns/ilm",
 		},
 	}

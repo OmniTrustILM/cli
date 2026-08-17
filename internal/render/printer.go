@@ -159,10 +159,17 @@ func ColorEnabled(mode ColorMode, out io.Writer) bool {
 	}
 }
 
+// formatJSON and formatYAML are the canonical structured -o values the printer
+// and the table renderers branch on.
+const (
+	formatJSON = "json"
+	formatYAML = "yaml"
+)
+
 // structuredFormats lists the -o values that produce machine output (table/wide are
 // human views handled by the table builders).
 var structuredFormats = map[string]bool{
-	"json": true, "yaml": true, "name": true,
+	formatJSON: true, formatYAML: true, "name": true,
 	"jsonpath": true, "jsonpath-as-json": true, "jsonpath-file": true,
 	"go-template": true, "go-template-file": true, "template": true, "templatefile": true,
 }

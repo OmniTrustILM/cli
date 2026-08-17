@@ -43,10 +43,17 @@ import (
 	"github.com/OmniTrustILM/cli/internal/render"
 )
 
+// Shared fixture vocabulary for the cmdutil command tests.
+const (
+	testNamespace    = "ns1"
+	testPlatformName = "ilm"
+	labelApp         = "app"
+)
+
 func okSeams() *cmdutil.SingleNameOpts {
 	return &cmdutil.SingleNameOpts{
 		ClientFn:    func() (*k8s.Client, error) { return &k8s.Client{}, nil },
-		NamespaceFn: func() (string, bool, error) { return "ns1", true, nil },
+		NamespaceFn: func() (string, bool, error) { return testNamespace, true, nil },
 	}
 }
 
@@ -92,7 +99,7 @@ func TestNewWaitCommand_Success(t *testing.T) {
 	cmd := cmdutil.NewWaitCommand(o, okSeams(), "Platform", getConds)
 	require.NoError(t, cmd.Flags().Set("for", "condition=Available"))
 	require.NoError(t, cmd.Flags().Set("timeout", "2s"))
-	require.NoError(t, cmd.RunE(cmd, []string{"ilm"}))
+	require.NoError(t, cmd.RunE(cmd, []string{testPlatformName}))
 	assert.Contains(t, out.String(), "platform/ilm met condition=Available")
 }
 
@@ -103,7 +110,7 @@ func TestNewWaitCommand_InvalidForIsUsageError(t *testing.T) {
 	o := &cli.Options{Printer: render.NewPrinter(&bytes.Buffer{}, &bytes.Buffer{})}
 	cmd := cmdutil.NewWaitCommand(o, okSeams(), "Platform", getConds)
 	require.NoError(t, cmd.Flags().Set("for", "bogus=x"))
-	err := cmd.RunE(cmd, []string{"ilm"})
+	err := cmd.RunE(cmd, []string{testPlatformName})
 	require.Error(t, err)
 	var ue cli.UsageError
 	assert.True(t, errors.As(err, &ue), "invalid --for should be a usage error")
@@ -117,7 +124,7 @@ func TestNewWaitCommand_ClientError(t *testing.T) {
 	opts := &cmdutil.SingleNameOpts{ClientFn: func() (*k8s.Client, error) { return nil, assert.AnError }}
 	cmd := cmdutil.NewWaitCommand(o, opts, "Platform", getConds)
 	require.NoError(t, cmd.Flags().Set("for", "condition=Available"))
-	require.ErrorIs(t, cmd.RunE(cmd, []string{"ilm"}), assert.AnError)
+	require.ErrorIs(t, cmd.RunE(cmd, []string{testPlatformName}), assert.AnError)
 }
 
 func TestRenderConditions(t *testing.T) {
@@ -167,25 +174,25 @@ func TestNewLogsCommand_Delegates(t *testing.T) {
 func TestTailPodLogs_NoPods(t *testing.T) {
 	c := fakeClientWithPods(t)
 	err := cmdutil.TailPodLogs(context.Background(), c, &bytes.Buffer{},
-		shared.LogsRequest{Namespace: "ns1", Name: "x", Tail: 100},
-		`proxy "x"`, "proxy", map[string]string{"app": "x"})
+		shared.LogsRequest{Namespace: testNamespace, Name: "x", Tail: 100},
+		`proxy "x"`, "proxy", map[string]string{labelApp: "x"})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `no pods found for proxy "x" in namespace "ns1"`)
 }
 
 func TestTailPodLogs_OptionsBranches(t *testing.T) {
 	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{
-		Name: "x-0", Namespace: "ns1", Labels: map[string]string{"app": "x"},
+		Name: "x-0", Namespace: testNamespace, Labels: map[string]string{labelApp: "x"},
 	}}
 	c := fakeClientWithPods(t, pod)
 	// The fake client has no logs REST client, so PodLogs errors — but podLogOptions
 	// (both the --since and the --tail branches) is exercised on the way there.
 	for _, req := range []shared.LogsRequest{
-		{Namespace: "ns1", Name: "x", Since: 5 * time.Second, Tail: -1},
-		{Namespace: "ns1", Name: "x", Tail: 50},
+		{Namespace: testNamespace, Name: "x", Since: 5 * time.Second, Tail: -1},
+		{Namespace: testNamespace, Name: "x", Tail: 50},
 	} {
 		err := cmdutil.TailPodLogs(context.Background(), c, &bytes.Buffer{}, req,
-			`proxy "x"`, "proxy", map[string]string{"app": "x"})
+			`proxy "x"`, "proxy", map[string]string{labelApp: "x"})
 		require.Error(t, err)
 	}
 }
@@ -195,7 +202,7 @@ func TestRenderEventsTable(t *testing.T) {
 	p := render.NewPrinter(out, &bytes.Buffer{})
 	p.Color = render.ColorNever
 
-	require.NoError(t, cmdutil.RenderEventsTable(p, nil, "platform", "ns1", "ilm"))
+	require.NoError(t, cmdutil.RenderEventsTable(p, nil, "platform", testNamespace, testPlatformName))
 	assert.Contains(t, out.String(), "no events for platform/ilm in ns1")
 
 	out.Reset()
@@ -205,7 +212,7 @@ func TestRenderEventsTable(t *testing.T) {
 		InvolvedObject: corev1.ObjectReference{Kind: "Pod", Name: "p1"},
 		Message:        "created pod",
 	}}
-	require.NoError(t, cmdutil.RenderEventsTable(p, evs, "platform", "ns1", "ilm"))
+	require.NoError(t, cmdutil.RenderEventsTable(p, evs, "platform", testNamespace, testPlatformName))
 	s := out.String()
 	assert.Contains(t, s, "Created")
 	assert.Contains(t, s, "Pod/p1")

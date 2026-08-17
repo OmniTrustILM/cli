@@ -63,7 +63,7 @@ func TestRunDescribe_WithConditions(t *testing.T) {
 // connector pod label (otilm.com/connector=<name>), not the app.kubernetes.io
 // labels that matched nothing on a live cluster.
 func TestConnectorPodSelector(t *testing.T) {
-	assert.Equal(t, map[string]string{"otilm.com/connector": "c1"}, connectorPodSelector("c1"))
+	assert.Equal(t, map[string]string{connectorPodLabel: "c1"}, connectorPodSelector("c1"))
 }
 
 // TestRunDescribe_WithPods verifies that the pods table is rendered when pods
@@ -77,7 +77,7 @@ func TestRunDescribe_WithPods(t *testing.T) {
 	}
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{Name: "c1-pod-xyz", Namespace: testNS, Labels: map[string]string{
-			"otilm.com/connector":         "c1",
+			connectorPodLabel:             "c1",
 			"app.kubernetes.io/name":      "c1",
 			"app.kubernetes.io/component": "connector",
 		}},

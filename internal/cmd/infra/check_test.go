@@ -62,7 +62,7 @@ func newCheckFixtures(t *testing.T, objs ...ctrlclient.Object) (*k8s.Client, *ca
 func TestRunCheck_LiveFailReturnsWorstFail(t *testing.T) {
 	// Managed-DB platform with no CNPG CRD served -> the capability analyzer fails.
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ns1"},
+		ObjectMeta: metav1.ObjectMeta{Name: infraPlatformName, Namespace: infraNamespace},
 		Status:     otilmv1alpha1.PlatformStatus{Phase: otilmv1alpha1.PlatformPhaseProgressing},
 	}
 	plat.Spec.Database.Mode = "managed"
@@ -70,7 +70,7 @@ func TestRunCheck_LiveFailReturnsWorstFail(t *testing.T) {
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	worst, err := runCheck(context.Background(), c, rep, p, checkOptions{Namespaces: []string{"ns1"}})
+	worst, err := runCheck(context.Background(), c, rep, p, checkOptions{Namespaces: []string{infraNamespace}})
 	require.NoError(t, err)
 	assert.Equal(t, analyze.SeverityFail, worst)
 	assert.Contains(t, out.String(), "✗")
@@ -108,7 +108,7 @@ func TestRunCheck_CleanLiveIsOK(t *testing.T) {
 	var out bytes.Buffer
 	p := render.NewPrinter(&out, &bytes.Buffer{})
 	p.Color = render.ColorNever
-	worst, err := runCheck(context.Background(), c, rep, p, checkOptions{Namespaces: []string{"ns1"}})
+	worst, err := runCheck(context.Background(), c, rep, p, checkOptions{Namespaces: []string{infraNamespace}})
 	require.NoError(t, err)
 	assert.NotEqual(t, analyze.SeverityFail, worst)
 }
@@ -132,6 +132,9 @@ func TestNewCheckCommand_FlagsAndGroup(t *testing.T) {
 	out, errOut := &bytes.Buffer{}, &bytes.Buffer{}
 	o := &cli.Options{Printer: render.NewPrinter(out, errOut)}
 	cmd := NewCheckCommand(o)
+	// Literal on purpose: the command sets Use from checkCommand, so asserting against
+	// that same constant would pass whatever value it held. This pins the invocation
+	// name users type.
 	assert.Equal(t, "check", cmd.Use)
 	assert.Equal(t, string(cli.GroupInfrastructure), cmd.GroupID)
 	assert.Contains(t, cmd.Aliases, "doctor")
@@ -191,7 +194,7 @@ func TestRunCheck_WorstFailReturnsFailSeverity(t *testing.T) {
 // no CNPG CRD served) causes worst==SeverityFail; the RunE must return cli.ErrFailure.
 func TestNewCheckCommand_RunE_DegradedReturnsErrFailure(t *testing.T) {
 	plat := &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ns1"},
+		ObjectMeta: metav1.ObjectMeta{Name: infraPlatformName, Namespace: infraNamespace},
 		Status:     otilmv1alpha1.PlatformStatus{Phase: otilmv1alpha1.PlatformPhaseProgressing},
 	}
 	plat.Spec.Database.Mode = "managed"

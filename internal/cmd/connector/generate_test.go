@@ -33,6 +33,9 @@ import (
 	"github.com/OmniTrustILM/cli/internal/render"
 )
 
+// minimalImage is the smallest well-formed image reference the flag tests accept.
+const minimalImage = "x:1"
+
 func newTestOptions() (*cli.Options, *bytes.Buffer) {
 	out := &bytes.Buffer{}
 	errOut := &bytes.Buffer{}
@@ -43,7 +46,7 @@ func TestConnectorGenerate_FullRegistration(t *testing.T) {
 	o, out := newTestOptions()
 	cmd := NewGenerateCommand(o)
 	cmd.SetArgs([]string{
-		connectorFlagName, "cryptosense", "--namespace", "ilm",
+		connectorFlagName, "cryptosense", connectorFlagNS, connectorNamespace,
 		connectorFlagImage, "harbor.example.com/ilm/connector-cryptosense:1.4.0",
 		"--platform-url", "https://ilm.example.com",
 		"--auth-type", "apiKey", "--replicas", "2",
@@ -63,7 +66,7 @@ func TestConnectorGenerate_FullRegistration(t *testing.T) {
 func TestConnectorGenerate_NoRegistration(t *testing.T) {
 	o, out := newTestOptions()
 	cmd := NewGenerateCommand(o)
-	cmd.SetArgs([]string{connectorFlagName, "demo", connectorFlagImage, "connector-demo:2.0.0"})
+	cmd.SetArgs([]string{connectorFlagName, connectorDemoName, connectorFlagImage, "connector-demo:2.0.0"})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	require.NoError(t, cmd.Execute())
@@ -78,11 +81,11 @@ func TestConnectorGenerate_RegistrationCaveatInHelp(t *testing.T) {
 
 func TestConnectorGenerate_Errors(t *testing.T) {
 	tests := [][]string{
-		{connectorFlagImage, "x:1"},                           // missing name
+		{connectorFlagImage, minimalImage},                    // missing name
 		{connectorFlagName, "c"},                              // missing image
 		{connectorFlagName, "c", connectorFlagImage, "noTag"}, // image without tag
-		{connectorFlagName, "c", connectorFlagImage, "x:1", "--auth-type", "kerberos"},
-		{connectorFlagName, "c", connectorFlagImage, "x:1", "--name-reg", "r"}, // unknown flag (sanity)
+		{connectorFlagName, "c", connectorFlagImage, minimalImage, "--auth-type", "kerberos"},
+		{connectorFlagName, "c", connectorFlagImage, minimalImage, "--name-reg", "r"}, // unknown flag (sanity)
 	}
 	for _, args := range tests {
 		o, out := newTestOptions()

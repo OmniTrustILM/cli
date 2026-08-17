@@ -36,6 +36,7 @@ import (
 
 const (
 	tableColPhase   = "PHASE"
+	tableColName    = "NAME"
 	tablePending    = "Pending"
 	tablePlatAlpha  = "Platform/ilm/alpha"
 	tableRunning    = "Running"
@@ -51,7 +52,7 @@ func TestPrintTable_AlignsColumns(t *testing.T) {
 	// would produce different second-column start offsets on each line.
 	// tabwriter must produce identical offsets on every line.
 	err := p.PrintTable(Table{
-		Columns: []string{"NAME", tableColPhase, "VERSION"},
+		Columns: []string{tableColName, tableColPhase, "VERSION"},
 		Rows: [][]string{
 			{"alpha", tableRunning, "2.18.0"},
 			{"a-much-longer-name", "Degraded", "2.18.0"},
@@ -103,7 +104,7 @@ func TestPrintTable_RaggedRowDoesNotPanic(t *testing.T) {
 
 	// 3 column headers, one row with only 1 cell, one complete row.
 	tbl := Table{
-		Columns: []string{"NAME", tableColPhase, "VERSION"},
+		Columns: []string{tableColName, tableColPhase, "VERSION"},
 		Rows: [][]string{
 			{"short-only"},                         // fewer cells than columns
 			{tableFullName, tablePending, "3.0.0"}, // complete row
@@ -133,8 +134,8 @@ func TestPrintTable_RaggedRowDoesNotPanic(t *testing.T) {
 func TestPrintTable_EmptyRows(t *testing.T) {
 	out := &bytes.Buffer{}
 	p := NewPrinter(out, &bytes.Buffer{})
-	require.NoError(t, p.PrintTable(Table{Columns: []string{"NAME", tableColPhase}}))
-	assert.Contains(t, out.String(), "NAME")
+	require.NoError(t, p.PrintTable(Table{Columns: []string{tableColName, tableColPhase}}))
+	assert.Contains(t, out.String(), tableColName)
 }
 
 func TestPrintTable_StructuredFormatSkips(t *testing.T) {
@@ -142,10 +143,10 @@ func TestPrintTable_StructuredFormatSkips(t *testing.T) {
 	p := NewPrinter(out, &bytes.Buffer{})
 	fs := pflag.NewFlagSet("t", pflag.ContinueOnError)
 	p.AddFlags(fs)
-	require.NoError(t, fs.Parse([]string{"-o", "json"}))
+	require.NoError(t, fs.Parse([]string{"-o", formatJSON}))
 
 	require.NoError(t, p.PrintTable(Table{
-		Columns: []string{"NAME", tableColPhase},
+		Columns: []string{tableColName, tableColPhase},
 		Rows:    [][]string{{"alpha", tableRunning}},
 	}))
 	// Nothing should be written when a structured format is active.
@@ -182,7 +183,7 @@ func TestPrintFindings_JSONPassthrough(t *testing.T) {
 	p := NewPrinter(out, &bytes.Buffer{})
 	fs := pflag.NewFlagSet("t", pflag.ContinueOnError)
 	p.AddFlags(fs)
-	require.NoError(t, fs.Parse([]string{"-o", "json"}))
+	require.NoError(t, fs.Parse([]string{"-o", formatJSON}))
 
 	require.NoError(t, p.PrintFindings(testFindings()))
 	var got []analyze.Finding
@@ -197,7 +198,7 @@ func TestPrintFindings_YAMLPassthrough(t *testing.T) {
 	p := NewPrinter(out, &bytes.Buffer{})
 	fs := pflag.NewFlagSet("t", pflag.ContinueOnError)
 	p.AddFlags(fs)
-	require.NoError(t, fs.Parse([]string{"-o", "yaml"}))
+	require.NoError(t, fs.Parse([]string{"-o", formatYAML}))
 
 	require.NoError(t, p.PrintFindings(testFindings()))
 	s := out.String()

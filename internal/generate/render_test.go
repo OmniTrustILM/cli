@@ -32,8 +32,8 @@ import (
 
 func TestRender_PlatformYAMLWithNotes(t *testing.T) {
 	p, notes, err := ScaffoldPlatform(PlatformOptions{
-		Name: "ilm", Namespace: "ilm", Profile: ProfileManagedHA,
-		DBMode: "external", Set: map[string]bool{"db-mode": true},
+		Name: genILM, Namespace: genILM, Profile: ProfileManagedHA,
+		DBMode: genExternal, Set: map[string]bool{flagDBMode: true},
 	})
 	require.NoError(t, err)
 
@@ -54,7 +54,7 @@ func TestRender_PlatformYAMLWithNotes(t *testing.T) {
 }
 
 func TestRender_NilNotesStillRenders(t *testing.T) {
-	p, _, err := ScaffoldPlatform(PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, Set: map[string]bool{}})
+	p, _, err := ScaffoldPlatform(PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, Set: map[string]bool{}})
 	require.NoError(t, err)
 	out, err := Render(p, nil)
 	require.NoError(t, err)
@@ -69,13 +69,13 @@ func TestRender_NilNotesStillRenders(t *testing.T) {
 func TestRender_PlaceholderNoteLouderComment(t *testing.T) {
 	// A scaffold with no --host produces a placeholder note for common.hostName.
 	_, notes, err := ScaffoldPlatform(PlatformOptions{
-		Name: "myapp", Namespace: "ilm", Profile: ProfileMinimal, Set: map[string]bool{},
+		Name: genMyApp, Namespace: genILM, Profile: ProfileMinimal, Set: map[string]bool{},
 	})
 	require.NoError(t, err)
 
 	// Render with notes only (pass a minimal object; content doesn't matter here).
 	p, _, err := ScaffoldPlatform(PlatformOptions{
-		Name: "myapp", Namespace: "ilm", Profile: ProfileMinimal, Set: map[string]bool{},
+		Name: genMyApp, Namespace: genILM, Profile: ProfileMinimal, Set: map[string]bool{},
 	})
 	require.NoError(t, err)
 
@@ -101,7 +101,7 @@ func TestRender_PlaceholderNoteLouderComment(t *testing.T) {
 // left empty in the scaffold (resolved at apply time from the kubectl context).
 func TestRender_EmptyNamespaceNoNamespaceLine(t *testing.T) {
 	p, notes, err := ScaffoldPlatform(PlatformOptions{
-		Name: "ilm", Namespace: "", Profile: ProfileMinimal, Set: map[string]bool{},
+		Name: genILM, Namespace: "", Profile: ProfileMinimal, Set: map[string]bool{},
 	})
 	require.NoError(t, err)
 	out, err := Render(p, notes)

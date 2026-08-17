@@ -344,7 +344,7 @@ func TestInit_WithDeps_DryRunClient(t *testing.T) {
 	assert.Contains(t, outStr, infraDryRun)
 	// Dep objects (cert-manager) must appear before operator objects (ilm-operator-controller-manager).
 	depIdx := strings.Index(outStr, "cert-manager")
-	opIdx := strings.Index(outStr, "ilm-operator-controller-manager")
+	opIdx := strings.Index(outStr, operatorDeployment)
 	assert.True(t, depIdx >= 0, "expected cert-manager dep object in output")
 	assert.True(t, opIdx >= 0, "expected ilm-operator-controller-manager operator object in output")
 	assert.Less(t, depIdx, opIdx, "dep objects must appear before operator objects in output")
@@ -556,7 +556,7 @@ func TestInit_Wait_TimesOut(t *testing.T) {
 	cmd.SetArgs([]string{
 		infraManifestFlag, writeManifest(t, deploymentManifest),
 		"-n", infraOperatorSys,
-		infraWaitFlag, infraTimeoutFlag, "300ms",
+		infraWaitFlag, infraTimeoutFlag, infraShortTimeout,
 	})
 	err := cmd.Execute()
 	require.Error(t, err)
@@ -578,7 +578,7 @@ func TestInit_Wait_DryRunNoOp(t *testing.T) {
 		infraManifestFlag, writeManifest(t, deploymentManifest),
 		"-n", infraOperatorSys,
 		infraDryRunClient,
-		infraWaitFlag, infraTimeoutFlag, "300ms",
+		infraWaitFlag, infraTimeoutFlag, infraShortTimeout,
 	})
 	require.NoError(t, cmd.Execute())
 

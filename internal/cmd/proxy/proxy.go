@@ -29,10 +29,14 @@ import (
 	"github.com/OmniTrustILM/cli/internal/cli"
 )
 
+// proxyKind is the proxy resource noun: the command-group name and the value of
+// the workload's component label.
+const proxyKind = "proxy"
+
 // NewProxyCommand builds the `proxy` parent command and its read subcommands.
 func NewProxyCommand(o *cli.Options) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "proxy",
+		Use:     proxyKind,
 		Aliases: []string{"prx", "proxies"},
 		Short:   "Inspect ILM Proxy instances",
 		GroupID: string(cli.GroupResources),

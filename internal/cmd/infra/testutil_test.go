@@ -78,6 +78,9 @@ const (
 	infraCRDsAsset     = "ilm-operator.crds.yaml"
 	infraCtrlAsset     = "ilm-operator.yaml"
 	infraReleaseTag    = "v1.0.0"
+	infraPlatformName  = "ilm"
+	infraShortTimeout  = "300ms"
+	infraNamespace     = "ns1"
 )
 
 // releaseAssets renders the assets of a published operator release: the two

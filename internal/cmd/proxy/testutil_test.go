@@ -47,6 +47,8 @@ const (
 	proxyEgress          = "egress"
 	proxyEgressToken     = "egress-config-token"
 	proxyFlagConfigToken = "--config-token-secret"
+	proxyFlagNS          = "--namespace"
+	proxyNamespace       = "ilm"
 	proxyCfgTok          = "cfg-tok"
 	proxyVer2180         = "2.18.0"
 	proxyAvailable       = "Available"

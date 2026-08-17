@@ -37,4 +37,7 @@ const (
 	connectorFlagImage = "--image"
 	connectorFlagName  = "--name"
 	connectorAvailable = "Available"
+	connectorFlagNS    = "--namespace"
+	connectorDemoName  = "demo"
+	connectorNamespace = "ilm"
 )

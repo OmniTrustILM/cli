@@ -42,7 +42,7 @@ func newTestOptions() (*cli.Options, *bytes.Buffer) {
 func TestProxyGenerate_Minimal(t *testing.T) {
 	o, out := newTestOptions()
 	cmd := NewGenerateCommand(o)
-	cmd.SetArgs([]string{proxyFlagName, proxyEgress, "--namespace", "ilm", "--config-token-secret", "egress-config-token"})
+	cmd.SetArgs([]string{proxyFlagName, proxyEgress, proxyFlagNS, proxyNamespace, "--config-token-secret", "egress-config-token"})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	require.NoError(t, cmd.Execute())

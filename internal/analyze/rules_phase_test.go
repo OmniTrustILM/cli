@@ -51,7 +51,7 @@ func TestPhaseAnalyzer(t *testing.T) {
 	}{
 		{"Running emits nothing", "Running", nil, 0, ""},
 		{"empty phase emits nothing", "", nil, 0, ""},
-		{"Degraded is fail", "Degraded", nil, 1, SeverityFail},
+		{"Degraded is fail", phaseDegraded, nil, 1, SeverityFail},
 		{"Failed is fail", analyzeFailed, nil, 1, SeverityFail},
 		{"short Progressing emits nothing", analyzeProgressing, progressingCond(2 * time.Minute), 0, ""},
 		{"long Progressing is warn", analyzeProgressing, progressingCond(30 * time.Minute), 1, SeverityWarn},
@@ -64,7 +64,7 @@ func TestPhaseAnalyzer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			s := &Snapshot{Platforms: []ResourceSnapshot{{
-				GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
+				GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
 				Phase: tt.phase, Conditions: tt.conds,
 			}}}
 			got := a.Analyze(s)
@@ -85,7 +85,7 @@ func TestPhaseAnalyzerConnectorFailed(t *testing.T) {
 	t.Parallel()
 	a := newPhaseAnalyzer()
 	s := &Snapshot{Connectors: []ResourceSnapshot{{
-		GVK: "Connector.otilm.com/v1alpha1", Namespace: "ns", Name: "conn1",
+		GVK: GVKConnector, Namespace: "ns", Name: "conn1",
 		Phase: analyzeFailed,
 	}}}
 	got := a.Analyze(s)

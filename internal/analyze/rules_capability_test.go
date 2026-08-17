@@ -40,7 +40,7 @@ func TestCapabilityAnalyzer(t *testing.T) {
 		s := &Snapshot{
 			Capabilities: []capabilities.Result{{Dep: capabilities.DepCNPG, Present: false}},
 			Platforms: []ResourceSnapshot{{
-				GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
+				GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
 				SpecModes: capabilities.Modes{DBManaged: true},
 			}},
 		}
@@ -63,7 +63,7 @@ func TestCapabilityAnalyzer(t *testing.T) {
 		s := &Snapshot{
 			Capabilities: []capabilities.Result{{Dep: capabilities.DepCNPG, Present: true}},
 			Platforms: []ResourceSnapshot{{
-				GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
+				GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
 				SpecModes: capabilities.Modes{DBManaged: true},
 			}},
 		}
@@ -73,7 +73,7 @@ func TestCapabilityAnalyzer(t *testing.T) {
 	t.Run("no capabilities reported (offline) emits nothing", func(t *testing.T) {
 		t.Parallel()
 		s := &Snapshot{Platforms: []ResourceSnapshot{{
-			GVK: analyzeAPIGroup, Namespace: "ns", Name: "ilm",
+			GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
 			SpecModes: capabilities.Modes{DBManaged: true},
 		}}}
 		assert.Empty(t, a.Analyze(s))

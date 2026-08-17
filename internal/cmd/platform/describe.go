@@ -178,6 +178,9 @@ func resolveEndpoints(pl *otilmv1alpha1.Platform) []endpoint {
 	out := []endpoint{{"admin-ui", base}}
 	m := pl.Spec.Messaging
 	if m.Mode == modeManaged && m.BrokerType == brokerRabbitMQ && m.Management.Expose {
+		// The endpoint's display name is deliberately a literal: it labels the /mq route
+		// in `describe` output and is not coupled to the spec.messaging.brokerType enum
+		// value brokerRabbitMQ, which merely shares the string.
 		out = append(out, endpoint{"rabbitmq", base + "/mq"})
 	}
 	return out

@@ -91,17 +91,20 @@ func certActive(c *otilmv1alpha1.AdminCertificateSpec) bool {
 	return c.Enabled == nil || *c.Enabled
 }
 
+// certSourceProvided marks a registerAdmin certificate backed by a user-supplied Secret.
+const certSourceProvided = "provided"
+
 func reportCertificate(ctx context.Context, o *cli.Options, c *k8s.Client, ns string, ra *otilmv1alpha1.RegisterAdminSpec, reveal bool) {
 	cert := ra.Certificate
 	if !certActive(cert) {
 		return
 	}
 	if cert == nil {
-		cert = &otilmv1alpha1.AdminCertificateSpec{Source: "provided"}
+		cert = &otilmv1alpha1.AdminCertificateSpec{Source: certSourceProvided}
 	}
-	src := defaultStr(cert.Source, "provided")
+	src := defaultStr(cert.Source, certSourceProvided)
 	_, _ = fmt.Fprintf(o.Out, "Method: certificate (source=%s)\n", src)
-	if src != "provided" {
+	if src != certSourceProvided {
 		_, _ = fmt.Fprintln(o.Out, "  cert-manager-issued (no user-supplied Secret to resolve)")
 		return
 	}

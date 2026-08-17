@@ -270,7 +270,7 @@ func findObj(objs []*unstructured.Unstructured, kind, name string) *unstructured
 // operatorEnvKeys reads the env of the first container of dep into a name→value map.
 func operatorEnvKeys(t *testing.T, dep *unstructured.Unstructured) map[string]string {
 	t.Helper()
-	containers, found, err := unstructured.NestedSlice(dep.Object, "spec", "template", "spec", "containers")
+	containers, found, err := unstructured.NestedSlice(dep.Object, keySpec, "template", keySpec, "containers")
 	require.NoError(t, err)
 	require.True(t, found)
 	require.NotEmpty(t, containers)
@@ -298,7 +298,7 @@ func assertBinding(t *testing.T, objs []*unstructured.Unstructured, name, roleRe
 
 	gotRoleRef, _, _ := unstructured.NestedString(b.Object, "roleRef", "name")
 	assert.Equalf(t, roleRef, gotRoleRef, "%s roleRef", name)
-	gotKind, _, _ := unstructured.NestedString(b.Object, "roleRef", "kind")
+	gotKind, _, _ := unstructured.NestedString(b.Object, "roleRef", keyKind)
 	assert.Equal(t, kindClusterRole, gotKind)
 
 	subjects, found, _ := unstructured.NestedSlice(b.Object, "subjects")
@@ -306,9 +306,9 @@ func assertBinding(t *testing.T, objs []*unstructured.Unstructured, name, roleRe
 	require.Len(t, subjects, 1)
 	subj, ok := subjects[0].(map[string]any)
 	require.True(t, ok)
-	assert.Equal(t, "ServiceAccount", subj["kind"])
+	assert.Equal(t, "ServiceAccount", subj[keyKind])
 	assert.Equal(t, keycloakOperatorSA, subj["name"])
-	assert.Equal(t, keycloakNamespace, subj["namespace"])
+	assert.Equal(t, keycloakNamespace, subj[keyNamespace])
 }
 
 // TestInstallDeps_DeterministicOrder asserts the deps are applied in the fixed
@@ -388,7 +388,7 @@ func fetchWithKeycloakResources(resourcesYAML string) func(context.Context, stri
 // Deployment's containers (raw, not deduped) — used to prove idempotency.
 func operatorEnvCount(t *testing.T, dep *unstructured.Unstructured, name string) int {
 	t.Helper()
-	containers, found, err := unstructured.NestedSlice(dep.Object, "spec", "template", "spec", "containers")
+	containers, found, err := unstructured.NestedSlice(dep.Object, keySpec, "template", keySpec, "containers")
 	require.NoError(t, err)
 	require.True(t, found)
 	n := 0

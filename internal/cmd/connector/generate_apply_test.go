@@ -41,7 +41,7 @@ func TestConnectorGenerate_Apply_DryRunClient(t *testing.T) {
 	o, out := newTestOptions()
 	cmd := NewGenerateCommand(o)
 	cmd.SetArgs([]string{
-		connectorFlagName, "demo", "--namespace", "ilm",
+		connectorFlagName, connectorDemoName, connectorFlagNS, connectorNamespace,
 		connectorFlagImage, "harbor.example.com/ilm/connector-demo:1.0.0",
 		"--apply", "--dry-run=client",
 	})
@@ -62,7 +62,7 @@ func TestConnectorGenerate_Apply_DryRunServer(t *testing.T) {
 	o, out := newTestOptions()
 	cmd := NewGenerateCommand(o)
 	cmd.SetArgs([]string{
-		connectorFlagName, "demo", "--namespace", "ilm",
+		connectorFlagName, connectorDemoName, connectorFlagNS, connectorNamespace,
 		connectorFlagImage, "harbor.example.com/ilm/connector-demo:1.0.0",
 		"--apply", "--dry-run=server",
 	})
@@ -83,7 +83,7 @@ func TestConnectorGenerate_NoApply_NoClusterContact(t *testing.T) {
 
 	o, out := newTestOptions()
 	cmd := NewGenerateCommand(o)
-	cmd.SetArgs([]string{connectorFlagName, "demo", connectorFlagImage, "connector-demo:1.0.0"})
+	cmd.SetArgs([]string{connectorFlagName, connectorDemoName, connectorFlagImage, "connector-demo:1.0.0"})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	require.NoError(t, cmd.Execute())

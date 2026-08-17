@@ -136,11 +136,15 @@ func printProxyEvents(ctx context.Context, c *k8s.Client, p *render.Printer, ns 
 	return p.PrintTable(tbl)
 }
 
+// proxyPodLabel is the operator-applied pod label key carrying the owning
+// Proxy's name.
+const proxyPodLabel = "otilm.com/proxy"
+
 // proxyPodSelector returns the label selector that uniquely matches a proxy's
 // own pods. The workload pods carry otilm.com/proxy=<name>, which is the
 // canonical selector for a single proxy's pods.
 func proxyPodSelector(name string) map[string]string {
 	return map[string]string{
-		"otilm.com/proxy": name,
+		proxyPodLabel: name,
 	}
 }

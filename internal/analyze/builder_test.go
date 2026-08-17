@@ -49,7 +49,7 @@ func newClient(t *testing.T, objs ...client.Object) *k8s.Client {
 
 func platformFixture() *otilmv1alpha1.Platform {
 	return &otilmv1alpha1.Platform{
-		ObjectMeta: metav1.ObjectMeta{Name: "ilm", Namespace: "ilm", Generation: 2},
+		ObjectMeta: metav1.ObjectMeta{Name: analyzePlatformName, Namespace: analyzePlatformName, Generation: 2},
 		Spec: otilmv1alpha1.PlatformSpec{
 			Version:   analyzeVer2180,
 			Database:  otilmv1alpha1.DatabaseSpec{Mode: "external", Credentials: &otilmv1alpha1.CredentialsRef{SecretRef: analyzeDBCreds}},
@@ -77,9 +77,9 @@ func TestBuilderBuildsSnapshotShape(t *testing.T) {
 
 	require.Len(t, snap.Platforms, 1)
 	rs := snap.Platforms[0]
-	assert.Equal(t, "Platform.otilm.com/v1alpha1", rs.GVK)
-	assert.Equal(t, "ilm", rs.Name)
-	assert.Equal(t, "ilm", rs.Namespace)
+	assert.Equal(t, analyzeAPIGroup, rs.GVK)
+	assert.Equal(t, analyzePlatformName, rs.Name)
+	assert.Equal(t, analyzePlatformName, rs.Namespace)
 	assert.Equal(t, "Running", rs.Phase)
 	assert.Equal(t, int64(2), rs.Generation)
 	assert.Equal(t, int64(2), rs.ObservedGen)
@@ -106,7 +106,7 @@ func TestBuilderMissingRefsPreResolution(t *testing.T) {
 func TestBuilderRefPresentNotFlagged(t *testing.T) {
 	t.Parallel()
 	plat := platformFixture()
-	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: analyzeDBCreds, Namespace: "ilm"}}
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: analyzeDBCreds, Namespace: analyzePlatformName}}
 	cl := newClient(t, plat, secret)
 	b := NewBuilder(cl, nil)
 
@@ -155,7 +155,7 @@ func TestBuilderAndDefaultRegistryIdenticalFindingsShape(t *testing.T) {
 	degraded := platformFixture()
 	degraded.Status.Phase = otilmv1alpha1.PlatformPhaseDegraded
 	degraded.Status.Conditions = []metav1.Condition{
-		{Type: "DatabaseReady", Status: metav1.ConditionFalse, Reason: "CNPGDown", Message: "down"},
+		{Type: analyzeDatabaseReady, Status: metav1.ConditionFalse, Reason: "CNPGDown", Message: "down"},
 	}
 	cl := newClient(t, degraded)
 	snap, err := NewBuilder(cl, nil).Build(context.Background(), BuildOptions{AllNamespaces: true})

@@ -111,6 +111,12 @@ type Modes struct {
 	TLSSource        string `json:"tlsSource"` // internal|letsEncrypt|issuerRef|secret
 }
 
+// edgeGatewayAPI is the spec.edge.type value that requires the Gateway API CRDs.
+const edgeGatewayAPI = "gatewayAPI"
+
+// tlsLetsEncrypt is the spec.edge.tls.source value that requires cert-manager.
+const tlsLetsEncrypt = "letsEncrypt"
+
 // RequiredFor returns the deps a chosen set of Platform modes needs, in a stable
 // order (db, messaging, keycloak, edge, tls). cert-manager is required for the
 // cert-managed edge TLS sources (letsEncrypt, issuerRef).
@@ -125,11 +131,11 @@ func RequiredFor(modes Modes) []Dep {
 	if modes.KeycloakManaged {
 		out = append(out, DepKeycloak)
 	}
-	if modes.Edge == "gatewayAPI" {
+	if modes.Edge == edgeGatewayAPI {
 		out = append(out, DepGatewayAPI)
 	}
 	switch modes.TLSSource {
-	case "letsEncrypt", "issuerRef":
+	case tlsLetsEncrypt, "issuerRef":
 		out = append(out, DepCertManager)
 	}
 	return out

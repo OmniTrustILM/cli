@@ -51,17 +51,17 @@ func TestConditionAnalyzer(t *testing.T) {
 		{
 			name: "DatabaseReady=False is a fail with curated remediation",
 			conds: []metav1.Condition{
-				cond("DatabaseReady", metav1.ConditionFalse, "CNPGNotReady", "cluster not ready"),
+				cond(analyzeDatabaseReady, metav1.ConditionFalse, "CNPGNotReady", "cluster not ready"),
 			},
-			wantSev:   map[string]Severity{"DatabaseReady": SeverityFail},
+			wantSev:   map[string]Severity{analyzeDatabaseReady: SeverityFail},
 			wantCount: 1,
 		},
 		{
 			name: "Degraded=True is a fail",
 			conds: []metav1.Condition{
-				cond("Degraded", metav1.ConditionTrue, "ComponentDown", "core crashlooping"),
+				cond(condDegraded, metav1.ConditionTrue, "ComponentDown", "core crashlooping"),
 			},
-			wantSev:   map[string]Severity{"Degraded": SeverityFail},
+			wantSev:   map[string]Severity{condDegraded: SeverityFail},
 			wantCount: 1,
 		},
 		{
@@ -94,7 +94,7 @@ func TestConditionAnalyzer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			s := &Snapshot{Platforms: []ResourceSnapshot{{
-				GVK: "Platform.otilm.com/v1alpha1", Namespace: "ns", Name: "ilm",
+				GVK: analyzeAPIGroup, Namespace: "ns", Name: analyzePlatformName,
 				Conditions: tt.conds,
 			}}}
 			got := a.Analyze(s)

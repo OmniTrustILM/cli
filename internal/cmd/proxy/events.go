@@ -59,5 +59,5 @@ func runEvents(ctx context.Context, c *k8s.Client, p *render.Printer, ns, name s
 	if err != nil {
 		return err
 	}
-	return cmdutil.RenderEventsTable(p, evs, "proxy", ns, name)
+	return cmdutil.RenderEventsTable(p, evs, proxyKind, ns, name)
 }

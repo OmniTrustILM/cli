@@ -75,7 +75,7 @@ func NewGenerateCommand(o *cli.Options) *cobra.Command {
 	fs.StringVar(&f.name, "name", "", "Platform resource name (required)")
 	fs.StringVarP(&f.namespace, "namespace", "n", "", "Target namespace")
 	fs.StringVar(&f.version, "version", "", "Platform version bundle (default: operator newest)")
-	fs.StringVar(&f.profile, "profile", "external", "Profile: minimal|external|managed-ha")
+	fs.StringVar(&f.profile, "profile", string(generate.ProfileExternal), "Profile: minimal|external|managed-ha")
 	fs.StringVar(&f.dbMode, "db-mode", "", "Database mode: external|managed")
 	fs.StringVar(&f.messagingMode, "messaging-mode", "", "Messaging mode: external|managed")
 	fs.StringVar(&f.brokerType, "broker-type", "", "Broker type: rabbitmq|servicebus")

@@ -50,8 +50,8 @@ func TestScaffoldPlatform_ProfileDefaults(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			p, notes, err := ScaffoldPlatform(PlatformOptions{
-				Name:      "ilm",
-				Namespace: "ilm",
+				Name:      genILM,
+				Namespace: genILM,
 				Profile:   tc.profile,
 				Set:       map[string]bool{},
 			})
@@ -59,8 +59,8 @@ func TestScaffoldPlatform_ProfileDefaults(t *testing.T) {
 			require.NotNil(t, p)
 			assert.Equal(t, "Platform", p.Kind)
 			assert.Equal(t, "otilm.com/v1alpha1", p.APIVersion)
-			assert.Equal(t, "ilm", p.Name)
-			assert.Equal(t, "ilm", p.Namespace)
+			assert.Equal(t, genILM, p.Name)
+			assert.Equal(t, genILM, p.Namespace)
 			assert.Equal(t, tc.wantDBMode, p.Spec.Database.Mode)
 			assert.Equal(t, tc.wantMsgMode, p.Spec.Messaging.Mode)
 			assert.Equal(t, tc.wantHA, p.Spec.HighAvailability != nil && p.Spec.HighAvailability.Enabled)
@@ -78,11 +78,11 @@ func TestScaffoldPlatform_ProfileDefaults(t *testing.T) {
 func TestScaffoldPlatform_FlagsOverrideProfile(t *testing.T) {
 	// managed-ha profile defaults DB to managed; explicit --db-mode external must win.
 	p, notes, err := ScaffoldPlatform(PlatformOptions{
-		Name:      "ilm",
-		Namespace: "ilm",
+		Name:      genILM,
+		Namespace: genILM,
 		Profile:   ProfileManagedHA,
 		DBMode:    genExternal,
-		Set:       map[string]bool{"db-mode": true},
+		Set:       map[string]bool{flagDBMode: true},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, genExternal, p.Spec.Database.Mode)
@@ -100,15 +100,15 @@ func TestScaffoldPlatform_FlagsOverrideProfile(t *testing.T) {
 
 func TestScaffoldPlatform_KeycloakNoneOmits(t *testing.T) {
 	p, _, err := ScaffoldPlatform(PlatformOptions{
-		Name: "ilm", Namespace: "ilm", Profile: ProfileExternal,
-		KeycloakMode: "none", Set: map[string]bool{"keycloak-mode": true},
+		Name: genILM, Namespace: genILM, Profile: ProfileExternal,
+		KeycloakMode: modeNone, Set: map[string]bool{"keycloak-mode": true},
 	})
 	require.NoError(t, err)
 	assert.Nil(t, p.Spec.Keycloak)
 }
 
 func TestScaffoldPlatform_NetworkPolicyDefaultTrue(t *testing.T) {
-	p, _, err := ScaffoldPlatform(PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, Set: map[string]bool{}})
+	p, _, err := ScaffoldPlatform(PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, Set: map[string]bool{}})
 	require.NoError(t, err)
 	require.NotNil(t, p.Spec.NetworkPolicy)
 	require.NotNil(t, p.Spec.NetworkPolicy.Enabled)
@@ -116,7 +116,7 @@ func TestScaffoldPlatform_NetworkPolicyDefaultTrue(t *testing.T) {
 
 	// explicit --network-policy=false wins
 	p2, _, err := ScaffoldPlatform(PlatformOptions{
-		Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal,
+		Name: genILM, Namespace: genILM, Profile: ProfileMinimal,
 		NetworkPolicy: boolPtr(false), Set: map[string]bool{"network-policy": true},
 	})
 	require.NoError(t, err)
@@ -126,9 +126,9 @@ func TestScaffoldPlatform_NetworkPolicyDefaultTrue(t *testing.T) {
 
 func TestScaffoldPlatform_EdgeAndTLS(t *testing.T) {
 	p, _, err := ScaffoldPlatform(PlatformOptions{
-		Name: "ilm", Namespace: "ilm", Profile: ProfileExternal,
+		Name: genILM, Namespace: genILM, Profile: ProfileExternal,
 		Edge: genGatewayAPI, TLSSource: genLetsEncrypt,
-		Set: map[string]bool{"edge": true, genTLSSource: true},
+		Set: map[string]bool{flagEdge: true, genTLSSource: true},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, p.Spec.Edge)
@@ -139,8 +139,11 @@ func TestScaffoldPlatform_EdgeAndTLS(t *testing.T) {
 }
 
 func TestScaffoldPlatform_DeletionPolicyDefaultRetain(t *testing.T) {
-	p, _, err := ScaffoldPlatform(PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, Set: map[string]bool{}})
+	p, _, err := ScaffoldPlatform(PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, Set: map[string]bool{}})
 	require.NoError(t, err)
+	// Literal on purpose: the seed sets deletionPolicy from policyRetain, so asserting
+	// against that same constant would pass whatever value it held. This pins the
+	// CRD enum value the generated manifest must carry.
 	assert.Equal(t, "Retain", string(p.Spec.DeletionPolicy))
 }
 
@@ -149,19 +152,19 @@ func TestScaffoldPlatform_Validation(t *testing.T) {
 		name string
 		o    PlatformOptions
 	}{
-		{"bad profile", PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: Profile("bogus"), Set: map[string]bool{}}},
-		{"bad db-mode", PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, DBMode: "weird", Set: map[string]bool{"db-mode": true}}},
-		{"bad keycloak-mode", PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, KeycloakMode: "auto", Set: map[string]bool{"keycloak-mode": true}}},
-		{"bad tls-source", PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, TLSSource: "acme", Set: map[string]bool{genTLSSource: true}}},
-		{"empty name", PlatformOptions{Name: "", Namespace: "ilm", Profile: ProfileMinimal, Set: map[string]bool{}}},
+		{"bad profile", PlatformOptions{Name: genILM, Namespace: genILM, Profile: Profile("bogus"), Set: map[string]bool{}}},
+		{"bad db-mode", PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, DBMode: "weird", Set: map[string]bool{flagDBMode: true}}},
+		{"bad keycloak-mode", PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, KeycloakMode: "auto", Set: map[string]bool{"keycloak-mode": true}}},
+		{"bad tls-source", PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, TLSSource: "acme", Set: map[string]bool{genTLSSource: true}}},
+		{genEmptyName, PlatformOptions{Name: "", Namespace: genILM, Profile: ProfileMinimal, Set: map[string]bool{}}},
 		// enum validation for flags the reviewer flagged as missing
-		{"bad messaging-mode", PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, MessagingMode: "kafka", Set: map[string]bool{"messaging-mode": true}}},
-		{"bad broker-type", PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, BrokerType: "kafka", Set: map[string]bool{"broker-type": true}}},
-		{"bad provisioning-mode", PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, ProvisioningMode: "auto", Set: map[string]bool{"provisioning-mode": true}}},
-		{"bad edge", PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, Edge: "traefik", Set: map[string]bool{"edge": true}}},
-		{"bad deletion-policy", PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, DeletionPolicy: "Keep", Set: map[string]bool{"deletion-policy": true}}},
+		{"bad messaging-mode", PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, MessagingMode: "kafka", Set: map[string]bool{"messaging-mode": true}}},
+		{"bad broker-type", PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, BrokerType: "kafka", Set: map[string]bool{"broker-type": true}}},
+		{"bad provisioning-mode", PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, ProvisioningMode: "auto", Set: map[string]bool{"provisioning-mode": true}}},
+		{"bad edge", PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, Edge: "traefik", Set: map[string]bool{flagEdge: true}}},
+		{"bad deletion-policy", PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, DeletionPolicy: "Keep", Set: map[string]bool{"deletion-policy": true}}},
 		// deploy mode requires rabbitmq broker
-		{"deploy+servicebus conflict", PlatformOptions{Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal, ProvisioningMode: "deploy", BrokerType: "servicebus", Set: map[string]bool{"provisioning-mode": true, "broker-type": true}}},
+		{"deploy+servicebus conflict", PlatformOptions{Name: genILM, Namespace: genILM, Profile: ProfileMinimal, ProvisioningMode: modeDeploy, BrokerType: "servicebus", Set: map[string]bool{"provisioning-mode": true, "broker-type": true}}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -178,7 +181,7 @@ func TestScaffoldPlatform_CRDHostRule(t *testing.T) {
 	for _, profile := range []Profile{ProfileMinimal, ProfileExternal, ProfileManagedHA} {
 		t.Run(string(profile), func(t *testing.T) {
 			p, _, err := ScaffoldPlatform(PlatformOptions{
-				Name: "ilm", Namespace: "ilm", Profile: profile, Set: map[string]bool{},
+				Name: genILM, Namespace: genILM, Profile: profile, Set: map[string]bool{},
 			})
 			require.NoError(t, err)
 			// The CRD requires: edge.enabled=true → edge.host != "" OR common.hostName != "".
@@ -194,10 +197,12 @@ func TestScaffoldPlatform_CRDHostRule(t *testing.T) {
 // BootstrapSecretRef is non-empty (the field is marked +kubebuilder:validation:Required).
 func TestScaffoldPlatform_CRDProvisioningDeployRule(t *testing.T) {
 	p, _, err := ScaffoldPlatform(PlatformOptions{
-		Name: "ilm", Namespace: "ilm", Profile: ProfileManagedHA, Set: map[string]bool{},
+		Name: genILM, Namespace: genILM, Profile: ProfileManagedHA, Set: map[string]bool{},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, p.Spec.Provisioning)
+	// Literal on purpose: the seed sets provisioningMode from modeDeploy, so asserting
+	// against that same constant would pass whatever value it held.
 	assert.Equal(t, "deploy", p.Spec.Provisioning.Mode)
 	// The CRD requires provisioning.deploy to be present and bootstrapSecretRef non-empty.
 	require.NotNil(t, p.Spec.Provisioning.Deploy,
@@ -213,7 +218,7 @@ func TestScaffoldPlatform_TLSInternalNoCompanion(t *testing.T) {
 	for _, profile := range []Profile{ProfileMinimal, ProfileExternal, ProfileManagedHA} {
 		t.Run(string(profile), func(t *testing.T) {
 			p, _, err := ScaffoldPlatform(PlatformOptions{
-				Name: "ilm", Namespace: "ilm", Profile: profile, Set: map[string]bool{},
+				Name: genILM, Namespace: genILM, Profile: profile, Set: map[string]bool{},
 			})
 			require.NoError(t, err)
 			require.NotNil(t, p.Spec.Edge)
@@ -272,13 +277,13 @@ func assertTLSCompanion(t *testing.T, tc tlsCompanionCase, p *otilmv1alpha1.Plat
 func TestScaffoldPlatform_TLSCompanionPlaceholders(t *testing.T) {
 	tests := []tlsCompanionCase{
 		{genLetsEncrypt, true, false, false},
-		{"issuerRef", false, true, false},
-		{"secret", false, false, true},
+		{tlsIssuerRef, false, true, false},
+		{tlsSecret, false, false, true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.tlsSource, func(t *testing.T) {
 			p, notes, err := ScaffoldPlatform(PlatformOptions{
-				Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal,
+				Name: genILM, Namespace: genILM, Profile: ProfileMinimal,
 				TLSSource: tc.tlsSource, Set: map[string]bool{genTLSSource: true},
 			})
 			require.NoError(t, err)
@@ -293,8 +298,8 @@ func TestScaffoldPlatform_TLSCompanionPlaceholders(t *testing.T) {
 // parentRef for gatewayAPI edges.
 func TestScaffoldPlatform_GatewayAPIPlaceholder(t *testing.T) {
 	p, notes, err := ScaffoldPlatform(PlatformOptions{
-		Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal,
-		Edge: genGatewayAPI, Set: map[string]bool{"edge": true},
+		Name: genILM, Namespace: genILM, Profile: ProfileMinimal,
+		Edge: genGatewayAPI, Set: map[string]bool{flagEdge: true},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, p.Spec.Edge)
@@ -318,7 +323,7 @@ func TestScaffoldPlatform_GatewayAPIPlaceholder(t *testing.T) {
 // provided it is used verbatim (source=flag) rather than synthesising a placeholder.
 func TestScaffoldPlatform_HostFlagOverridesPlaceholder(t *testing.T) {
 	p, notes, err := ScaffoldPlatform(PlatformOptions{
-		Name: "ilm", Namespace: "ilm", Profile: ProfileMinimal,
+		Name: genILM, Namespace: genILM, Profile: ProfileMinimal,
 		HostName: "ilm.corp.example.com",
 		Set:      map[string]bool{"host": true},
 	})
@@ -327,7 +332,7 @@ func TestScaffoldPlatform_HostFlagOverridesPlaceholder(t *testing.T) {
 
 	var hostNote *EffectiveNote
 	for i := range notes {
-		if notes[i].Field == "common.hostName" {
+		if notes[i].Field == fieldHostName {
 			hostNote = &notes[i]
 		}
 	}
@@ -339,12 +344,12 @@ func TestScaffoldPlatform_HostFlagOverridesPlaceholder(t *testing.T) {
 // given a placeholder note is recorded for common.hostName.
 func TestScaffoldPlatform_PlaceholderHostNote(t *testing.T) {
 	_, notes, err := ScaffoldPlatform(PlatformOptions{
-		Name: "myapp", Namespace: "ilm", Profile: ProfileMinimal, Set: map[string]bool{},
+		Name: genMyApp, Namespace: genILM, Profile: ProfileMinimal, Set: map[string]bool{},
 	})
 	require.NoError(t, err)
 	var hostNote *EffectiveNote
 	for i := range notes {
-		if notes[i].Field == "common.hostName" {
+		if notes[i].Field == fieldHostName {
 			hostNote = &notes[i]
 		}
 	}

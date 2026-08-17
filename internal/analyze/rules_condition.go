@@ -40,6 +40,12 @@ func newConditionAnalyzer() conditionAnalyzer { return conditionAnalyzer{} }
 
 func (conditionAnalyzer) Name() string { return "condition" }
 
+// condDegraded is the operator's Degraded CONDITION type. It shares the string with
+// the Degraded status phase (phaseDegraded) but is a separate API surface — the
+// operator declares them as separate constants too — so the two are deliberately
+// not collapsed into one constant here.
+const condDegraded = "Degraded"
+
 func (a conditionAnalyzer) Analyze(s *Snapshot) []Finding {
 	var out []Finding
 	for _, r := range s.Resources() {
@@ -57,7 +63,7 @@ func (a conditionAnalyzer) Analyze(s *Snapshot) []Finding {
 func (a conditionAnalyzer) evaluate(r ResourceSnapshot, c metav1.Condition) (Finding, bool) {
 	var sev Severity
 	switch {
-	case c.Type == "Degraded" && c.Status == metav1.ConditionTrue:
+	case c.Type == condDegraded && c.Status == metav1.ConditionTrue:
 		sev = SeverityFail
 	case strings.HasSuffix(c.Type, "UpgradeBlocked") && c.Status == metav1.ConditionTrue:
 		sev = SeverityWarn

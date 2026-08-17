@@ -38,6 +38,9 @@ import (
 // status while polling.
 const deployPollInterval = 200 * time.Millisecond
 
+// conditionTrue is the status a passing condition reports ("True").
+const conditionTrue = "True"
+
 // WaitDeploymentsAvailable blocks until every Deployment among applied reports
 // Available, or the timeout elapses. Objects that are not Deployments are
 // silently skipped; when applied contains no Deployments the call is a no-op
@@ -49,7 +52,7 @@ const deployPollInterval = 200 * time.Millisecond
 // became Available.
 func (a *Applier) WaitDeploymentsAvailable(ctx context.Context, applied []*unstructured.Unstructured, timeout time.Duration) error {
 	for _, obj := range applied {
-		if obj.GetKind() != "Deployment" {
+		if obj.GetKind() != kindDeployment {
 			continue
 		}
 		ns, name := obj.GetNamespace(), obj.GetName()
@@ -87,7 +90,7 @@ func deploymentAvailable(dep *appsv1.Deployment) bool {
 		return true
 	}
 	for _, c := range dep.Status.Conditions {
-		if c.Type == appsv1.DeploymentAvailable && c.Status == "True" {
+		if c.Type == appsv1.DeploymentAvailable && c.Status == conditionTrue {
 			return true
 		}
 	}
