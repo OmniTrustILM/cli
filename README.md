@@ -22,9 +22,11 @@ go install github.com/OmniTrustILM/cli/cmd/ilmctl@latest
 
 ## Contributing
 
-Contributions are welcome. All contributors sign the CLA, handled automatically
-by cla-assistant on your first pull request. Maintainers cutting a release
-follow [RELEASE.md](RELEASE.md).
+Contributions are welcome. Sign your commits with `git commit -s` — every commit
+carries a `Signed-off-by` line under the
+[Developer Certificate of Origin](https://developercertificate.org/). See
+[CONTRIBUTING.md](https://github.com/OmniTrustILM/.github/blob/main/CONTRIBUTING.md)
+for the details. Maintainers cutting a release follow [RELEASE.md](RELEASE.md).
 
 The eight guide pages enumerated in [RELEASE.md](RELEASE.md) —
 `docs/site/{index,quickstart,configuration,gitops,upgrades,troubleshooting,diagnostics,commands}.md`
