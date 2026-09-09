@@ -16,7 +16,7 @@ local `replace` you never commit), not an edit to `go.mod`.
 
 ## License header
 
-Every `.go` file must begin with the MIT copyright block from
+Every `.go` file must begin with the Apache-2.0 SPDX header from
 `hack/boilerplate.go.txt`. No exceptions. controller-gen and code generators
 are configured to prepend it automatically; hand-written files must include it
 manually.

@@ -38,4 +38,4 @@ command help text, not the page. Everything under `docs/` outside `docs/site/`
 
 ## License
 
-[MIT](LICENSE)
+[Apache License 2.0](LICENSE.md)

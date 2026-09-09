@@ -96,7 +96,7 @@ nfpms:
     homepage: https://github.com/OmniTrustILM/cli
     maintainer: OmniTrust ILM <support@omnitrust.com>
     description: Command-line interface for OmniTrust ILM (ilmctl / kubectl ilm).
-    license: MIT
+    license: Apache-2.0
     bindir: /usr/bin
 
 homebrew_casks:
@@ -122,7 +122,7 @@ scoops:
       name: scoop-bucket
     homepage: https://github.com/OmniTrustILM/cli
     description: Command-line interface for OmniTrust ILM.
-    license: MIT
+    license: Apache-2.0
 
 chocolateys:
   - name: ilmctl
