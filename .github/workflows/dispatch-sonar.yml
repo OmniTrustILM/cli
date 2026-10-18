@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download PR context artifact from upstream run
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: pr-context
           path: pr_context
@@ -35,7 +35,7 @@ jobs:
           echo "run_id=$(jq -r '.run_id' pr_context/pr-context.json)" >> $GITHUB_OUTPUT
 
       - name: Dispatch Sonar workflow with inputs
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         # Pass the (PR-derived, untrusted) context through env vars and read them via
         # process.env, never interpolating ${{ }} into the script body — env values are
         # treated as data, so a crafted head_branch/head_repo cannot inject code.
