@@ -87,7 +87,7 @@ attaches to the GitHub release:
 
 | Asset | Detail |
 |---|---|
-| `ilmctl_<version>_<os>_<arch>.tar.gz` / `.zip` | linux, darwin, windows × amd64, arm64 (zip on windows); carries `LICENSE`, `README.md` and `docs/` |
+| `ilmctl_<version>_<os>_<arch>.tar.gz` / `.zip` | linux, darwin, windows × amd64, arm64 (zip on windows); carries `LICENSE.md`, `README.md` and `docs/` |
 | `kubectl-ilm_<version>_<os>_<arch>.tar.gz` / `.zip` | the same build published under the plugin name |
 | `ilmctl_<version>_linux_<arch>.deb` / `.rpm` | nfpm packages, installing to `/usr/bin` |
 | `checksums.txt` | sha256 over the published archives and packages |

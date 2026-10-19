@@ -48,7 +48,7 @@ archives:
       - goos: windows
         formats: [zip]
     files:
-      - LICENSE
+      - LICENSE.md
       - README.md
       - docs/**/*
   - id: kubectl-ilm
@@ -59,7 +59,7 @@ archives:
       - goos: windows
         formats: [zip]
     files:
-      - LICENSE
+      - LICENSE.md
       - README.md
 
 checksum:
@@ -130,7 +130,7 @@ chocolateys:
     title: OmniTrust ILM CLI
     authors: OmniTrust ILM
     project_url: https://github.com/OmniTrustILM/cli
-    license_url: https://github.com/OmniTrustILM/cli/blob/main/LICENSE
+    license_url: https://github.com/OmniTrustILM/cli/blob/main/LICENSE.md
     summary: Command-line interface for OmniTrust ILM.
     description: |
       ilmctl / kubectl ilm — install, operate, troubleshoot and diagnose

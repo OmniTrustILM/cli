@@ -92,6 +92,32 @@ func TestGoReleaserConfig(t *testing.T) {
 	require.Contains(t, string(formatsRaw), "rpm")
 }
 
+// TestGoReleaserArchiveFiles pins every extra file an archive ships to the tree:
+// GoReleaser fails the release when a listed file is missing, and nothing else
+// exercises the list before a tag is pushed.
+func TestGoReleaserArchiveFiles(t *testing.T) {
+	root := repoRoot(t)
+	cfg := readYAML(t, filepath.Join(root, goreleaserFile))
+
+	archives, ok := cfg["archives"].([]any)
+	require.True(t, ok, "archives block present")
+	for i, a := range archives {
+		am, ok := a.(map[string]any)
+		require.True(t, ok, "archives[%d] is a mapping", i)
+		files, _ := am["files"].([]any)
+		for _, f := range files {
+			pattern, _ := f.(string)
+			if m, ok := f.(map[string]any); ok {
+				pattern, _ = m["src"].(string)
+			}
+			require.NotEmpty(t, pattern, "archives[%d] lists a file without a path", i)
+			matches, err := filepath.Glob(filepath.Join(root, pattern))
+			require.NoError(t, err, "archives[%d] pattern %q", i, pattern)
+			require.NotEmpty(t, matches, "archives[%d] ships %q, which matches no file in the tree", i, pattern)
+		}
+	}
+}
+
 // TestGoReleaserChangelog pins the release-notes delegation: github-native hands the
 // notes to GitHub's generator, which applies the label categories in .github/release.yml
 // (synced from the org template). A GoReleaser-formatted commit list would ignore both.
