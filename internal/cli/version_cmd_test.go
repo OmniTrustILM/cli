@@ -14,8 +14,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/yaml"
 
@@ -93,8 +96,12 @@ func TestFillClusterVersions(t *testing.T) {
 }
 
 func TestFillClusterVersions_PopulatesInfo(t *testing.T) {
-	// Exercises the real applyPlatformVersions logic: mixed empty/non-empty
-	// ObservedVersions → correct OperatorVersion (first non-empty) + PlatformVersions.
+	operator := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{Name: k8s.OperatorDeploymentName, Namespace: "ilm-operator-system"},
+		Spec: appsv1.DeploymentSpec{Template: corev1.PodTemplateSpec{Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{Name: "manager", Image: "registry.example.com/ilm/operator:1.1.0"}},
+		}}},
+	}
 	plat1 := &otilmv1alpha1.Platform{
 		ObjectMeta: metav1.ObjectMeta{Name: cliPlatformName, Namespace: "ns1"},
 		Status:     otilmv1alpha1.PlatformStatus{ObservedVersion: cliVer2180},
@@ -107,15 +114,13 @@ func TestFillClusterVersions_PopulatesInfo(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "ilm3", Namespace: "ns3"},
 		Status:     otilmv1alpha1.PlatformStatus{ObservedVersion: ""},
 	}
-	list := &otilmv1alpha1.PlatformList{
-		Items: []otilmv1alpha1.Platform{*plat1, *platEmpty, *plat2},
-	}
+	c := k8s.NewFakeClient(t, k8s.FakeClientOptions{
+		Objects: []ctrlclient.Object{operator, plat1, platEmpty, plat2},
+	})
 	info := version.Info{}
-	applyPlatformVersions(list, &info)
-	// First non-empty ObservedVersion (plat1) sets OperatorVersion.
-	assert.Equal(t, cliVer2180, info.OperatorVersion)
-	// Both non-empty versions are appended; the empty one is skipped.
-	assert.Equal(t, []string{cliVer2180, "2.19.0"}, info.PlatformVersions)
+	fillClusterVersions(context.Background(), k8s.NewFactoryWithClient(c), &info)
+	assert.Equal(t, "1.1.0", info.OperatorVersion, "the operator's image tag, not a platform version")
+	assert.ElementsMatch(t, []string{cliVer2180, "2.19.0"}, info.PlatformVersions, "empty observed versions are skipped")
 }
 
 // TestFillClusterVersions_FactoryError verifies that fillClusterVersions is a
