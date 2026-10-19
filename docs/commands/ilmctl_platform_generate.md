@@ -4,7 +4,7 @@ Scaffold a Platform CR
 
 ### Synopsis
 
-Scaffold a Platform custom resource. A --profile seeds defaults (minimal|external|managed-ha); any explicit flag always overrides the profile, and the effective values are echoed as YAML comments. Use --apply to server-side apply directly, or --dry-run=server to validate against the cluster's CEL rules.
+Scaffold a Platform custom resource. A --profile seeds defaults (minimal|external|managed-ha); any explicit flag always overrides the profile, and the effective values are echoed as YAML comments. Use --apply to server-side apply directly, or --dry-run=server to validate against the cluster's CEL rules; --apply is refused while the output still holds placeholders.
 
 ```
 ilmctl platform generate [flags]

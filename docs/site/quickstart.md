@@ -52,6 +52,8 @@ $ ilmctl init --ref <commit-sha> --wait
 
 # 4. Generate a Platform CR.
 $ ilmctl platform generate \
+    --name ilm \
+    --host ilm.example.com \
     --profile managed-ha \
     --db-mode managed \
     --messaging-mode managed \
@@ -59,10 +61,12 @@ $ ilmctl platform generate \
     --keycloak-mode managed \
     > platform.yaml
 
-# 5. Review the file, commit it to Git, then apply.
+# 5. Replace the values the header comments mark as placeholders (here the
+#    provisioning bootstrap Secret), review the file, commit it to Git, then apply.
 $ kubectl apply -f platform.yaml
-#    Or combine steps 4-5:
-$ ilmctl platform generate --profile managed-ha --db-mode managed --apply
+#    --apply is refused while placeholders remain. With external provisioning
+#    nothing is left to replace, so steps 4-5 combine into one:
+$ ilmctl platform generate --name ilm --host ilm.example.com --profile managed-ha --provisioning-mode external --apply
 
 # 6. Wait for the platform to become available.
 $ ilmctl platform wait ilm --for=condition=Available --timeout 10m

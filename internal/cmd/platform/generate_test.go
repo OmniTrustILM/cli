@@ -93,11 +93,34 @@ func TestGenerate_Apply_DryRunServer(t *testing.T) {
 
 	o, out, _ := newTestOptions(nil)
 	cmd := NewGenerateCommand(o)
-	cmd.SetArgs([]string{platformFlagName, platformName, platformFlagNS, platformName, platformFlagProf, platformExternal, "--apply", "--dry-run=server"})
+	cmd.SetArgs([]string{
+		platformFlagName, platformName, platformFlagNS, platformName, platformFlagProf, "managed-ha",
+		"--provisioning-mode", platformExternal, "--host", platformILMDomain, "--apply", "--dry-run=server",
+	})
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	// The fake client does not run CEL webhooks, so the apply should succeed.
 	require.NoError(t, cmd.Execute())
+}
+
+func TestGenerate_Apply_RefusesPlaceholders(t *testing.T) {
+	called := false
+	old := generateClientFor
+	generateClientFor = func(*cli.Options) (*k8s.Client, error) {
+		called = true
+		return nil, nil
+	}
+	defer func() { generateClientFor = old }()
+
+	o, out, _ := newTestOptions(nil)
+	cmd := NewGenerateCommand(o)
+	cmd.SetArgs([]string{platformFlagName, platformName, platformFlagProf, platformExternal, "--apply"})
+	cmd.SetOut(out)
+	cmd.SetErr(out)
+	err := cmd.Execute()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "database.host", "the refusal names the fields to replace")
+	assert.False(t, called, "a Platform with placeholders never reaches the cluster")
 }
 
 func TestGenerate_NoApply_NoClusterContact(t *testing.T) {
