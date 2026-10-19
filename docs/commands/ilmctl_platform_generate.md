@@ -32,7 +32,7 @@ ilmctl platform generate [flags]
       --profile string             Profile: minimal|external|managed-ha (default "external")
       --provisioning-mode string   Provisioning mode: external|deploy
       --tls-source string          TLS source: internal|letsEncrypt|issuerRef|secret
-      --version string             Platform version bundle (default: operator newest)
+      --version string             Platform version bundle (default: the operator's default version)
 ```
 
 ### Options inherited from parent commands

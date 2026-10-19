@@ -20,7 +20,7 @@ import (
 	otilmv1alpha1 "github.com/OmniTrustILM/operator/api/v1alpha1"
 )
 
-// NewUpgradeCommand builds `platform upgrade NAME --to vX`. The upgrade is
+// NewUpgradeCommand builds `platform upgrade NAME --to X.Y.Z`. The upgrade is
 // forward-only: --to at or below the current observedVersion is rejected. The
 // --ack-* flags set the per-module managed UpgradeAcknowledged flags the
 // operator requires for a major version bump.

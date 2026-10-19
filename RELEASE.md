@@ -40,7 +40,10 @@ go mod tidy
   so regenerate and commit whenever command help text changed.
 - Version examples in the prose docs: [`docs/site/quickstart.md`](docs/site/quickstart.md)
   and [`docs/site/upgrades.md`](docs/site/upgrades.md) name a concrete operator release in
-  their `ilmctl init` / `ilmctl upgrade` examples.
+  their `ilmctl init` / `ilmctl upgrade` examples, and `upgrades.md` names a platform
+  version in its `ilmctl platform upgrade --to` example. Write the platform version without
+  a `v` prefix, and pick one the pinned BOM supports: the compatibility check refuses
+  anything else.
 - The operator tag named in [`CLAUDE.md`](CLAUDE.md), which states the current pin.
 - `.krew.yaml` is a structural fixture (`go test ./hack/...` validates its shape). The
   krew manifest that ships is rendered by GoReleaser at tag time; the committed file is
@@ -128,8 +131,8 @@ $ sha256sum -c checksums.txt --ignore-missing
 
 # 3. The install path works end to end on a fresh cluster. The tag below is an
 #    OPERATOR release — ilmctl's own version is a separate line.
-$ ilmctl init --version v1.0.0 --wait
-Using operator release v1.0.0 (checksums verified).
+$ ilmctl init --version <operator tag pinned in go.mod> --wait
+Using operator release <that tag> (checksums verified).
 $ ilmctl status
 ```
 

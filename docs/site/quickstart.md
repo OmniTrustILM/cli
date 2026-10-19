@@ -46,7 +46,7 @@ $ ilmctl deps install --only cnpg,rabbitmq,keycloak
 #    The release manifests are verified against the release checksums.txt first.
 $ ilmctl init --wait
 #    Or pin the release:
-$ ilmctl init --version v1.0.0 --wait
+$ ilmctl init --version v1.1.0 --wait
 #    Development only — install from a commit or a local checkout (checksum-free):
 $ ilmctl init --ref <commit-sha> --wait
 

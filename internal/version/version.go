@@ -118,9 +118,8 @@ type CompatResult struct {
 	Message           string   `json:"message"`
 }
 
-// CheckOperator validates an operator/platform version against the embedded
-// BOM. Semantics are warning-not-failure: an unsupported version is reported,
-// never fatal.
+// CheckOperator validates a platform version against the embedded BOM. It only
+// reports; whether an unsupported version is fatal is the caller's decision.
 func CheckOperator(ver string) CompatResult {
 	requested := ver
 	if requested == "" {
