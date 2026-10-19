@@ -2,8 +2,8 @@ github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 h1:L/gRVlceqvL25
 github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=
 github.com/Masterminds/semver/v3 v3.4.0/go.mod h1:4V+yj/TJE1HU9XfppCwVMZq3I84lprf4nC11bSS5beM=
-github.com/OmniTrustILM/operator v1.0.0 h1:4SGBJJaX8PhEhHbXPi7I8LNl5uL0fvkOtctx3sp56VE=
-github.com/OmniTrustILM/operator v1.0.0/go.mod h1:EXH69+CWyP0JF6Zlo1UZ6uzqKS96nYNVOJMxwRJ2w5Q=
+github.com/OmniTrustILM/operator v1.1.0 h1:qiDPuBnKryCAc+6eySdCW+OZFkuclBuCBxCSq+cflHw=
+github.com/OmniTrustILM/operator v1.1.0/go.mod h1:Sgox0l4SYPckplfTKjblTvb6rALbvzLHnjJQYgelEfs=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM=

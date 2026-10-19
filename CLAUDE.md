@@ -7,7 +7,7 @@ github.com/OmniTrustILM/cli   go 1.26
 ```
 
 `ilmctl` depends on the operator as an ordinary published Go module, pinned in
-`go.mod` to an operator release tag (`v1.0.0` today) and bumped to an exact tag
+`go.mod` to an operator release tag (`v1.1.0` today) and bumped to an exact tag
 — never `@latest` — as part of preparing each ilmctl release (see
 [RELEASE.md](RELEASE.md)). There is **no `replace` directive committed** — do
 not add one. To develop
