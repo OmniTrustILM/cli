@@ -134,8 +134,7 @@ func CheckOperator(ver string) CompatResult {
 	if ok {
 		res.Message = fmt.Sprintf("%s is supported by this CLI build", requested)
 	} else {
-		res.Message = fmt.Sprintf("%s is outside the supported range %v; this CLI may not understand it (warning, not an error)",
-			requested, bom.SupportedVersions())
+		res.Message = fmt.Sprintf("%s is outside the supported range %v", requested, bom.SupportedVersions())
 	}
 	return res
 }
