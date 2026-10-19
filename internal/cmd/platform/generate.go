@@ -121,6 +121,9 @@ func runGenerate(cmd *cobra.Command, o *cli.Options, f *generateFlags) error {
 			return fmt.Errorf("the generated Platform still has placeholders in %s; write it to a file, replace them, then apply it",
 				strings.Join(fields, ", "))
 		}
+		if p.Namespace == "" {
+			p.Namespace = resolveNamespace("", o)
+		}
 		c, err := generateClientFor(o)
 		if err != nil {
 			return err

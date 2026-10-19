@@ -8,6 +8,7 @@ package platform
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -85,6 +86,15 @@ func TestGenerate_MissingNameIsError(t *testing.T) {
 	assert.Error(t, cmd.Execute())
 }
 
+// completeApplyArgs returns the arguments that generate and apply a Platform with no
+// placeholders left, followed by extra.
+func completeApplyArgs(extra ...string) []string {
+	return append([]string{
+		platformFlagName, platformName, platformFlagProf, "managed-ha",
+		"--provisioning-mode", platformExternal, "--host", platformILMDomain, "--apply",
+	}, extra...)
+}
+
 func TestGenerate_Apply_DryRunServer(t *testing.T) {
 	c := k8s.NewFakeClient(t, k8s.FakeClientOptions{})
 	old := generateClientFor
@@ -93,14 +103,31 @@ func TestGenerate_Apply_DryRunServer(t *testing.T) {
 
 	o, out, _ := newTestOptions(nil)
 	cmd := NewGenerateCommand(o)
-	cmd.SetArgs([]string{
-		platformFlagName, platformName, platformFlagNS, platformName, platformFlagProf, "managed-ha",
-		"--provisioning-mode", platformExternal, "--host", platformILMDomain, "--apply", "--dry-run=server",
-	})
+	cmd.SetArgs(completeApplyArgs(platformFlagNS, platformName, "--dry-run=server"))
 	cmd.SetOut(out)
 	cmd.SetErr(out)
 	// The fake client does not run CEL webhooks, so the apply should succeed.
 	require.NoError(t, cmd.Execute())
+}
+
+func TestGenerate_Apply_UsesContextNamespace(t *testing.T) {
+	c := k8s.NewFakeClient(t, k8s.FakeClientOptions{})
+	old := generateClientFor
+	generateClientFor = func(*cli.Options) (*k8s.Client, error) { return c, nil }
+	defer func() { generateClientFor = old }()
+
+	o, out, _ := newTestOptions(nil)
+	o.Factory = k8s.NewFactoryWithClient(c)
+	cmd := NewGenerateCommand(o)
+	cmd.SetArgs(completeApplyArgs())
+	cmd.SetOut(out)
+	cmd.SetErr(out)
+	require.NoError(t, cmd.Execute())
+
+	ns, _, err := o.Factory.Namespace()
+	require.NoError(t, err)
+	_, err = c.GetPlatform(context.Background(), ns, platformName)
+	require.NoError(t, err, "without -n the Platform is applied to the context namespace")
 }
 
 func TestGenerate_Apply_RefusesPlaceholders(t *testing.T) {
