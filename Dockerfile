@@ -1,7 +1,7 @@
 ########################
 # Build Stage
 ########################
-FROM golang:1.26 AS builder
+FROM golang:1.27 AS builder
 
 ARG VERSION=dev
 ARG GIT_COMMIT=none
