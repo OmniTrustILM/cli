@@ -88,7 +88,8 @@ $ kubectl patch platform ilm -n ilm --type=merge \
 `ilmctl` embeds the operator's bill of materials (BOM) from the operator release it
 was built against, and the BOM lists the platform versions that release supports.
 `ilmctl platform upgrade --to` refuses a version outside that list unless you pass
-`--force`, which prints a warning and patches the version anyway. The operator
+`--force`, which prints a warning and patches the version anyway, and `ilmctl check`
+and `ilmctl diagnostics analyze` warn about a Platform running a version outside it. The operator
 `--version` of `ilmctl init` and `ilmctl upgrade` is not checked against the BOM, so
 the CLI can still install, upgrade and inspect an operator that is newer or older
 than the one it was built against.
