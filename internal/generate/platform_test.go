@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package generate
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -340,4 +341,69 @@ func TestScaffoldPlatform_PlaceholderHostNote(t *testing.T) {
 	require.NotNil(t, hostNote)
 	assert.Equal(t, sourcePlaceholder, hostNote.Source)
 	assert.Equal(t, "myapp.example.com", hostNote.Value)
+}
+
+// noteFor returns the note recorded for field.
+func noteFor(t *testing.T, notes []EffectiveNote, field string) EffectiveNote {
+	t.Helper()
+	for _, n := range notes {
+		if n.Field == field {
+			return n
+		}
+	}
+	require.FailNow(t, "no note", "no note recorded for %s", field)
+	return EffectiveNote{}
+}
+
+// TestScaffoldPlatform_CRDModeBlocks verifies that each database, messaging and
+// Keycloak mode carries the block the CRD requires for it, with values its field
+// patterns accept.
+func TestScaffoldPlatform_CRDModeBlocks(t *testing.T) {
+	hostPattern := regexp.MustCompile(`^[a-zA-Z0-9._:\[\]-]{1,253}$`)
+	secretPattern := regexp.MustCompile(`^[a-zA-Z0-9._-]{1,255}$`)
+
+	t.Run(genManaged, func(t *testing.T) {
+		p, notes, err := ScaffoldPlatform(PlatformOptions{
+			Name: genILM, Namespace: genILM, Profile: ProfileManagedHA, Set: map[string]bool{},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, p.Spec.Database.Managed, "database.managed is required when mode=managed")
+		assert.Equal(t, "100Gi", p.Spec.Database.Managed.Storage.Size)
+		require.NotNil(t, p.Spec.Messaging.Managed, "messaging.managed is required when mode=managed")
+		assert.Equal(t, "20Gi", p.Spec.Messaging.Managed.Storage.Size)
+		require.NotNil(t, p.Spec.Keycloak.Managed, "keycloak.managed is required when mode=managed")
+		assert.Equal(t, sourceDefault, noteFor(t, notes, "database.managed.storage.size").Source)
+		assert.Equal(t, sourceDefault, noteFor(t, notes, "messaging.managed.storage.size").Source)
+	})
+
+	t.Run(genExternal, func(t *testing.T) {
+		p, notes, err := ScaffoldPlatform(PlatformOptions{
+			Name: genILM, Namespace: genILM, Profile: ProfileExternal, Set: map[string]bool{},
+		})
+		require.NoError(t, err)
+		db, msg := p.Spec.Database, p.Spec.Messaging
+		assert.Regexp(t, hostPattern, db.Host)
+		assert.NotEmpty(t, db.Name)
+		require.NotNil(t, db.Credentials)
+		assert.Regexp(t, secretPattern, db.Credentials.SecretRef)
+		assert.Regexp(t, hostPattern, msg.Host)
+		require.NotNil(t, msg.Credentials)
+		assert.Regexp(t, secretPattern, msg.Credentials.SecretRef)
+		for _, field := range []string{
+			"database.host", "database.name", "database.credentials.secretRef",
+			"messaging.host", "messaging.credentials.secretRef",
+		} {
+			assert.Equal(t, sourcePlaceholder, noteFor(t, notes, field).Source, field)
+		}
+	})
+}
+
+func TestPlaceholders(t *testing.T) {
+	notes := []EffectiveNote{
+		{Field: "a", Source: sourcePlaceholder},
+		{Field: "b", Source: sourceFlag},
+		{Field: "c", Source: sourcePlaceholder},
+	}
+	assert.Equal(t, []string{"a", "c"}, Placeholders(notes))
+	assert.Empty(t, Placeholders([]EffectiveNote{{Field: "b", Source: sourceDefault}}))
 }

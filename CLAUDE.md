@@ -7,7 +7,7 @@ github.com/OmniTrustILM/cli   go 1.26
 ```
 
 `ilmctl` depends on the operator as an ordinary published Go module, pinned in
-`go.mod` to an operator release tag (`v1.0.0` today) and bumped to an exact tag
+`go.mod` to an operator release tag (`v1.1.0` today) and bumped to an exact tag
 — never `@latest` — as part of preparing each ilmctl release (see
 [RELEASE.md](RELEASE.md)). There is **no `replace` directive committed** — do
 not add one. To develop
@@ -43,8 +43,7 @@ changes to the operator are not driven by CLI requirements.
 ## Directory layout
 
 ```
-cmd/ilmctl/          standalone binary entry-point
-cmd/kubectl-ilm/     kubectl plugin entry-point
+cmd/ilmctl/          the single entry-point, built as both ilmctl and kubectl-ilm (it dispatches on the name it runs under)
 internal/            non-exported packages (buildinfo, etc.)
 hack/                tooling scripts and boilerplate
 docs/                GitHub-only pages (architecture.md) + the generated per-command tree (docs/commands/)

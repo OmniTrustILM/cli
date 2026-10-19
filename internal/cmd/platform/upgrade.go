@@ -20,7 +20,7 @@ import (
 	otilmv1alpha1 "github.com/OmniTrustILM/operator/api/v1alpha1"
 )
 
-// NewUpgradeCommand builds `platform upgrade NAME --to vX`. The upgrade is
+// NewUpgradeCommand builds `platform upgrade NAME --to X.Y.Z`. The upgrade is
 // forward-only: --to at or below the current observedVersion is rejected. The
 // --ack-* flags set the per-module managed UpgradeAcknowledged flags the
 // operator requires for a major version bump.
@@ -142,12 +142,8 @@ func guardCompatibility(to string, force bool, o *cli.Options) error {
 		return nil
 	}
 	if !force {
-		msg := fmt.Sprintf("version %s is not supported by this CLI build (supported: %s)",
+		return fmt.Errorf("version %s is not supported by this CLI build (supported: %s); pass --force to upgrade anyway",
 			to, strings.Join(compat.SupportedVersions, ", "))
-		if compat.Message != "" {
-			msg += "; " + compat.Message
-		}
-		return fmt.Errorf("%s", msg)
 	}
 	_, _ = fmt.Fprintf(o.ErrOut,
 		"warning: version %s is not in the supported set — proceeding because --force was set (supported: %s)\n",

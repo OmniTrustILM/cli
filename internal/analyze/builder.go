@@ -82,18 +82,25 @@ func (b *Builder) Build(ctx context.Context, o BuildOptions) (*Snapshot, error) 
 }
 
 func (b *Builder) fillOperator(ctx context.Context, o BuildOptions, snap *Snapshot) {
-	ns := o.OperatorNamespace
+	snap.OperatorVersion, snap.OperatorReady = Operator(ctx, b.Client, o.OperatorNamespace)
+}
+
+// Operator reads the operator Deployment in ns, or in the default operator
+// namespace when ns is empty, and returns its image tag, which is the operator's
+// version, and whether a replica is ready. An absent or forbidden Deployment is
+// not fatal: both results are then zero.
+func Operator(ctx context.Context, c *k8s.Client, ns string) (tag string, ready bool) {
 	if ns == "" {
 		ns = defaultOperatorNamespace
 	}
-	dep, err := b.Client.OperatorDeployment(ctx, ns)
+	dep, err := c.OperatorDeployment(ctx, ns)
 	if err != nil {
-		return // absent/forbidden operator is not fatal
+		return "", false
 	}
-	snap.OperatorReady = dep.Status.ReadyReplicas >= 1
 	if cs := dep.Spec.Template.Spec.Containers; len(cs) > 0 {
-		snap.OperatorVersion = imageTag(cs[0].Image)
+		tag = imageTag(cs[0].Image)
 	}
+	return tag, dep.Status.ReadyReplicas >= 1
 }
 
 func (b *Builder) collectPlatforms(ctx context.Context, ns string, snap *Snapshot, missing map[string]bool) error {

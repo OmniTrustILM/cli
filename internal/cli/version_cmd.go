@@ -17,6 +17,7 @@ import (
 
 	otilmv1alpha1 "github.com/OmniTrustILM/operator/api/v1alpha1"
 
+	"github.com/OmniTrustILM/cli/internal/analyze"
 	"github.com/OmniTrustILM/cli/internal/k8s"
 	"github.com/OmniTrustILM/cli/internal/version"
 )
@@ -114,20 +115,13 @@ func fillClusterVersions(ctx context.Context, f *k8s.Factory, info *version.Info
 		return
 	}
 	applyPlatformVersions(list, info)
+	info.OperatorVersion, _ = analyze.Operator(ctx, c, "")
 }
 
-// applyPlatformVersions populates info from a PlatformList: the first platform
-// with a non-empty ObservedVersion sets OperatorVersion; every non-empty
-// ObservedVersion is appended to PlatformVersions.
 func applyPlatformVersions(list *otilmv1alpha1.PlatformList, info *version.Info) {
 	for i := range list.Items {
-		v := list.Items[i].Status.ObservedVersion
-		if v == "" {
-			continue
-		}
-		info.PlatformVersions = append(info.PlatformVersions, v)
-		if info.OperatorVersion == "" {
-			info.OperatorVersion = v
+		if v := list.Items[i].Status.ObservedVersion; v != "" {
+			info.PlatformVersions = append(info.PlatformVersions, v)
 		}
 	}
 }

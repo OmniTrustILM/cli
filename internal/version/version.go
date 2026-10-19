@@ -118,9 +118,8 @@ type CompatResult struct {
 	Message           string   `json:"message"`
 }
 
-// CheckOperator validates an operator/platform version against the embedded
-// BOM. Semantics are warning-not-failure: an unsupported version is reported,
-// never fatal.
+// CheckOperator validates a platform version against the embedded BOM. It only
+// reports; whether an unsupported version is fatal is the caller's decision.
 func CheckOperator(ver string) CompatResult {
 	requested := ver
 	if requested == "" {
@@ -135,8 +134,7 @@ func CheckOperator(ver string) CompatResult {
 	if ok {
 		res.Message = fmt.Sprintf("%s is supported by this CLI build", requested)
 	} else {
-		res.Message = fmt.Sprintf("%s is outside the supported range %v; this CLI may not understand it (warning, not an error)",
-			requested, bom.SupportedVersions())
+		res.Message = fmt.Sprintf("%s is outside the supported range %v", requested, bom.SupportedVersions())
 	}
 	return res
 }

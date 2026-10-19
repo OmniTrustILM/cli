@@ -3,7 +3,7 @@ module github.com/OmniTrustILM/cli
 go 1.26.9
 
 require (
-	github.com/OmniTrustILM/operator v1.0.0
+	github.com/OmniTrustILM/operator v1.1.0
 	github.com/go-logr/logr v1.4.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10

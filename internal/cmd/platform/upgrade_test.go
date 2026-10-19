@@ -9,11 +9,14 @@ package platform
 import (
 	"bytes"
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/OmniTrustILM/cli/internal/version"
 
 	otilmv1alpha1 "github.com/OmniTrustILM/operator/api/v1alpha1"
 )
@@ -140,6 +143,9 @@ func TestUpgrade_RejectsUnsupportedWithoutForce(t *testing.T) {
 	err := cmd.Execute()
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "supported")
+	assert.Contains(t, err.Error(), platformFlagForce, "the refusal names the override")
+	assert.NotContains(t, err.Error(), "warning", "a refusal is not a warning")
+	assert.Equal(t, 1, strings.Count(err.Error(), version.Default()), "the supported versions are listed once")
 
 	// Spec.Version must NOT have been mutated.
 	cl, _ := o.Factory.Client()
@@ -151,7 +157,7 @@ func TestUpgrade_UnsupportedWithForceSucceeds(t *testing.T) {
 	p := platformWithVersion(platformVer2180, platformVer2180)
 	o, out := newFakeOptions(t, p)
 	cmd := NewUpgradeCommand(o)
-	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, unsupportedVersion, "--force"})
+	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, unsupportedVersion, platformFlagForce})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)
@@ -172,7 +178,7 @@ func TestUpgrade_DowngradeWithForceStillRejected(t *testing.T) {
 	p := platformWithVersion(platformVer2180, platformVer2180)
 	o, out := newFakeOptions(t, p)
 	cmd := NewUpgradeCommand(o)
-	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, platformVer2170, "--force"})
+	cmd.SetArgs([]string{platformName, "-n", platformName, platformFlagTo, platformVer2170, platformFlagForce})
 	cmd.SetContext(context.Background())
 	cmd.SetOut(out)
 	cmd.SetErr(out)

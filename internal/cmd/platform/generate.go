@@ -50,7 +50,8 @@ func NewGenerateCommand(o *cli.Options) *cobra.Command {
 		Long: "Scaffold a Platform custom resource. A --profile seeds defaults " +
 			"(minimal|external|managed-ha); any explicit flag always overrides the profile, " +
 			"and the effective values are echoed as YAML comments. Use --apply to server-side " +
-			"apply directly, or --dry-run=server to validate against the cluster's CEL rules.",
+			"apply directly, or --dry-run=server to validate against the cluster's CEL rules; " +
+			"--apply is refused while the output still holds placeholders.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return runGenerate(cmd, o, f)
 		},
@@ -58,7 +59,7 @@ func NewGenerateCommand(o *cli.Options) *cobra.Command {
 	fs := cmd.Flags()
 	fs.StringVar(&f.name, "name", "", "Platform resource name (required)")
 	fs.StringVarP(&f.namespace, "namespace", "n", "", "Target namespace")
-	fs.StringVar(&f.version, "version", "", "Platform version bundle (default: operator newest)")
+	fs.StringVar(&f.version, "version", "", "Platform version bundle (default: the operator's default version)")
 	fs.StringVar(&f.profile, "profile", string(generate.ProfileExternal), "Profile: minimal|external|managed-ha")
 	fs.StringVar(&f.dbMode, "db-mode", "", "Database mode: external|managed")
 	fs.StringVar(&f.messagingMode, "messaging-mode", "", "Messaging mode: external|managed")
@@ -116,6 +117,13 @@ func runGenerate(cmd *cobra.Command, o *cli.Options, f *generateFlags) error {
 	}
 
 	if f.apply {
+		if fields := generate.Placeholders(notes); len(fields) > 0 {
+			return fmt.Errorf("the generated Platform still has placeholders in %s; write it to a file, replace them, then apply it",
+				strings.Join(fields, ", "))
+		}
+		if p.Namespace == "" {
+			p.Namespace = resolveNamespace("", o)
+		}
 		c, err := generateClientFor(o)
 		if err != nil {
 			return err

@@ -28,7 +28,7 @@ func NewUpgradeCommand(o *cli.Options) *cobra.Command {
 		Short:   "Upgrade the ILM operator to a newer manifest",
 		GroupID: string(cli.GroupInfrastructure),
 		Long: "Re-apply a newer operator manifest. This upgrades the OPERATOR, not a Platform " +
-			"instance (use `platform upgrade NAME --to vX` for that). Reports CRD/RBAC deltas before applying. " +
+			"instance (use `platform upgrade NAME --to X.Y.Z` for that). Reports CRD/RBAC deltas before applying. " +
 			"With no source flag the latest published operator release is used; release manifests are " +
 			"verified against the release checksums before anything is applied.",
 		RunE: func(cmd *cobra.Command, _ []string) error { return runUpgrade(cmd, o, f) },

@@ -123,6 +123,10 @@ const (
 
 	fieldHostName    = "common.hostName"
 	fieldImageDigest = "image.digest"
+
+	// Managed storage sizes, matching the operator's own managed samples.
+	defaultDatabaseStorage  = "100Gi"
+	defaultMessagingStorage = "20Gi"
 )
 
 var (
@@ -158,6 +162,24 @@ func (r *noteResolver) pick(field, flagName, flagVal, seedVal string) string {
 func (r *noteResolver) placeholder(field, value string) string {
 	r.notes = append(r.notes, EffectiveNote{Field: field, Value: value, Source: sourcePlaceholder})
 	return value
+}
+
+// defaultValue records an EffectiveNote with source=default and returns value.
+func (r *noteResolver) defaultValue(field, value string) string {
+	r.notes = append(r.notes, EffectiveNote{Field: field, Value: value, Source: sourceDefault})
+	return value
+}
+
+// Placeholders returns the fields whose values are placeholders the user must
+// replace before the Platform is applied.
+func Placeholders(notes []EffectiveNote) []string {
+	var fields []string
+	for _, n := range notes {
+		if n.Source == sourcePlaceholder {
+			fields = append(fields, n.Field)
+		}
+	}
+	return fields
 }
 
 // strPtr returns a pointer to s.
@@ -219,6 +241,33 @@ func resolveEnumFields(r *noteResolver, o PlatformOptions, seed profileSeed) (re
 	}
 
 	return f, nil
+}
+
+// wireDatabase attaches the block the CRD requires for the database mode: a
+// managed instance with default storage, or placeholders for an external server.
+func wireDatabase(r *noteResolver, db *otilmv1alpha1.DatabaseSpec) {
+	if db.Mode == modeManaged {
+		db.Managed = &otilmv1alpha1.ManagedDatabaseSpec{
+			Storage: otilmv1alpha1.StorageSpec{Size: r.defaultValue("database.managed.storage.size", defaultDatabaseStorage)},
+		}
+		return
+	}
+	db.Host = r.placeholder("database.host", "postgres.example.com")
+	db.Name = r.placeholder("database.name", "ilm")
+	db.Credentials = &otilmv1alpha1.CredentialsRef{SecretRef: r.placeholder("database.credentials.secretRef", "ilm-database")}
+}
+
+// wireMessaging attaches the block the CRD requires for the messaging mode: a
+// managed broker with default storage, or placeholders for an external broker.
+func wireMessaging(r *noteResolver, m *otilmv1alpha1.MessagingSpec) {
+	if m.Mode == modeManaged {
+		m.Managed = &otilmv1alpha1.ManagedMessagingSpec{
+			Storage: otilmv1alpha1.StorageSpec{Size: r.defaultValue("messaging.managed.storage.size", defaultMessagingStorage)},
+		}
+		return
+	}
+	m.Host = r.placeholder("messaging.host", "messaging.example.com")
+	m.Credentials = &otilmv1alpha1.CredentialsRef{SecretRef: r.placeholder("messaging.credentials.secretRef", "ilm-messaging")}
 }
 
 // wireProvisioningDeploy attaches the deploy block when provMode=deploy.
@@ -300,8 +349,10 @@ func resolveHAAndNetworkPolicy(r *noteResolver, o PlatformOptions, seed profileS
 // sorted by field name for deterministic output.
 //
 // The resulting CR satisfies the CRD's CEL XValidation rules by emitting
-// clearly-marked PLACEHOLDER values for user-specific data the scaffolder
-// cannot know (hostname, TLS credentials, provisioning bootstrap secret).
+// default storage for managed infrastructure and clearly-marked PLACEHOLDER
+// values for user-specific data the scaffolder cannot know (hostname, external
+// database and messaging endpoints, TLS credentials, provisioning bootstrap
+// secret).
 // Notes with Source="placeholder" are rendered with a louder TODO comment by
 // Render so the user cannot miss them.
 func ScaffoldPlatform(o PlatformOptions) (*otilmv1alpha1.Platform, []EffectiveNote, error) {
@@ -374,8 +425,13 @@ func ScaffoldPlatform(o PlatformOptions) (*otilmv1alpha1.Platform, []EffectiveNo
 	// "external" and "managed" — "none" is a CLI-level sentinel that means omit.
 	if f.keycloakMode != modeNone {
 		p.Spec.Keycloak = &otilmv1alpha1.KeycloakSpec{Mode: f.keycloakMode}
+		if f.keycloakMode == modeManaged {
+			p.Spec.Keycloak.Managed = &otilmv1alpha1.ManagedKeycloakSpec{}
+		}
 	}
 
+	wireDatabase(r, &p.Spec.Database)
+	wireMessaging(r, &p.Spec.Messaging)
 	wireProvisioningDeploy(r, p, f.provMode)
 	wireTLSCompanions(r, p, f.tlsSource)
 	wireGatewayAPI(r, p, f.edge)

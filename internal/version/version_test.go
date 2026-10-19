@@ -53,6 +53,7 @@ func TestCheckOperator(t *testing.T) {
 			r := CheckOperator(tt.version)
 			assert.Equal(t, tt.wantOK, r.Supported)
 			assert.Contains(t, r.Message, tt.wantInMsg)
+			assert.NotContains(t, r.Message, "warning", "callers decide whether an unsupported version is fatal")
 			assert.ElementsMatch(t, bom.SupportedVersions(), r.SupportedVersions)
 		})
 	}
