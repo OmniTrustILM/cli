@@ -16,6 +16,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
+
+	"github.com/OmniTrustILM/cli/internal/buildinfo"
 )
 
 const (
@@ -46,21 +48,24 @@ func TestGoReleaserConfig(t *testing.T) {
 
 	require.EqualValues(t, 2, cfg["version"], "goreleaser config schema version")
 
-	// Exactly one build, with both ldflags variables pointed at internal/buildinfo.
 	builds, ok := cfg["builds"].([]any)
 	require.True(t, ok, "builds block present")
-	require.Len(t, builds, 1, "one build feeds both names")
-	build := builds[0].(map[string]any)
-	require.Equal(t, "./cmd/ilmctl", build["main"])
-	require.Equal(t, "ilmctl", build["binary"])
-	ldflags, _ := yaml.Marshal(build["ldflags"])
-	for _, want := range []string{
-		"internal/buildinfo.GitVersion",
-		"internal/buildinfo.GitCommit",
-		"internal/buildinfo.BuildDate",
-	} {
-		require.Contains(t, string(ldflags), want)
+	require.Len(t, builds, 2, "one build per published name")
+	binaries := map[string]bool{}
+	for _, b := range builds {
+		build := b.(map[string]any)
+		require.Equal(t, "./cmd/ilmctl", build["main"], "both names are the same program")
+		binaries[fmt.Sprint(build["binary"])] = true
+		ldflags, _ := yaml.Marshal(build["ldflags"])
+		for _, want := range []string{
+			"internal/buildinfo.GitVersion",
+			"internal/buildinfo.GitCommit",
+			"internal/buildinfo.BuildDate",
+		} {
+			require.Contains(t, string(ldflags), want)
+		}
 	}
+	require.Equal(t, map[string]bool{buildinfo.BinaryName: true, buildinfo.PluginBinaryName: true}, binaries)
 
 	// Two archive entries: one for each published name from the same build.
 	archives, ok := cfg["archives"].([]any)
@@ -90,6 +95,35 @@ func TestGoReleaserConfig(t *testing.T) {
 	formatsRaw, _ := yaml.Marshal(nfpms[0])
 	require.Contains(t, string(formatsRaw), "deb")
 	require.Contains(t, string(formatsRaw), "rpm")
+}
+
+// TestGoReleaserPluginArchive pins the plugin name inside the kubectl-ilm archive:
+// kubectl discovers a plugin by its file name, so the archive, and the krew
+// manifest rendered from it, must carry a binary named kubectl-ilm.
+func TestGoReleaserPluginArchive(t *testing.T) {
+	cfg := readYAML(t, filepath.Join(repoRoot(t), goreleaserFile))
+
+	binaryOf := map[string]string{}
+	for _, b := range cfg["builds"].([]any) {
+		build := b.(map[string]any)
+		binaryOf[fmt.Sprint(build["id"])] = fmt.Sprint(build["binary"])
+	}
+	var pluginBuilds []string
+	for _, a := range cfg["archives"].([]any) {
+		archive := a.(map[string]any)
+		if archive["id"] == buildinfo.PluginBinaryName {
+			pluginBuilds = stringsOf(t, archive["ids"])
+		}
+	}
+	require.NotEmpty(t, pluginBuilds, "the kubectl-ilm archive names its builds")
+	for _, id := range pluginBuilds {
+		require.Equal(t, buildinfo.PluginBinaryName, binaryOf[id], "build %q feeds the kubectl-ilm archive", id)
+	}
+
+	krews, ok := cfg["krews"].([]any)
+	require.True(t, ok, "krews block present")
+	require.Equal(t, []string{buildinfo.PluginBinaryName}, stringsOf(t, krews[0].(map[string]any)["ids"]),
+		"krew installs the plugin archive")
 }
 
 // TestGoReleaserArchiveFiles pins every extra file an archive ships to the tree:

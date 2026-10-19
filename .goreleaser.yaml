@@ -1,4 +1,4 @@
-# GoReleaser v2 — one build, published as both `ilmctl` and `kubectl-ilm`.
+# GoReleaser v2 — one program, built and published as both `ilmctl` and `kubectl-ilm`.
 # Supply chain: checksums, cosign blob signatures, syft SBOM.
 # Packaging: nfpm (.deb/.rpm), Homebrew tap, scoop bucket, chocolatey, krew.
 # Public indexes (homebrew-core, krew-index, chocolatey community) are HELD
@@ -21,8 +21,11 @@ before:
   hooks:
     - go mod tidy
 
+# The program dispatches on the name it runs under, and GoReleaser names a binary per
+# build, not per archive, so the plugin name takes a second build of the same main.
 builds:
-  - id: ilmctl
+  - &build
+    id: ilmctl
     main: ./cmd/ilmctl
     binary: ilmctl
     env:
@@ -36,10 +39,13 @@ builds:
       - -X github.com/OmniTrustILM/cli/internal/buildinfo.BuildDate={{.Date}}
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64]
+  - <<: *build
+    id: kubectl-ilm
+    binary: kubectl-ilm
 
-# Two archives from the SAME build artifact: one named ilmctl, one kubectl-ilm.
-# The kubectl-ilm archive ships the binary with the plugin name so `tar -xf`
-# yields `kubectl-ilm` on $PATH, satisfying `kubectl plugin list`.
+# Two archives, one per name. The kubectl-ilm archive ships the binary with the
+# plugin name so `tar -xf` yields `kubectl-ilm` on $PATH, satisfying
+# `kubectl plugin list`.
 archives:
   - id: ilmctl
     ids: [ilmctl]
@@ -52,7 +58,7 @@ archives:
       - README.md
       - docs/**/*
   - id: kubectl-ilm
-    ids: [ilmctl]
+    ids: [kubectl-ilm]
     name_template: "kubectl-ilm_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     wrap_in_directory: false
     format_overrides:
@@ -140,7 +146,7 @@ chocolateys:
 # Renders .krew.yaml for our custom krew index (submission to krew-index held).
 krews:
   - name: ilm
-    ids: [ilmctl, kubectl-ilm]
+    ids: [kubectl-ilm]
     skip_upload: "true"
     repository:
       owner: OmniTrustILM

@@ -43,8 +43,7 @@ changes to the operator are not driven by CLI requirements.
 ## Directory layout
 
 ```
-cmd/ilmctl/          standalone binary entry-point
-cmd/kubectl-ilm/     kubectl plugin entry-point
+cmd/ilmctl/          the single entry-point, built as both ilmctl and kubectl-ilm (it dispatches on the name it runs under)
 internal/            non-exported packages (buildinfo, etc.)
 hack/                tooling scripts and boilerplate
 docs/                GitHub-only pages (architecture.md) + the generated per-command tree (docs/commands/)
